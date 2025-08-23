@@ -1,0 +1,126 @@
+#!/bin/bash
+#
+# A smart wrapper for Docker that simplifies container interactions.
+# It is designed to be run from anywhere within the project.
+#
+
+# --- Strict Mode ---
+# -e: exit on any error
+# -u: exit on use of an unset variable
+# -o pipefail: exit if any command in a pipeline fails
+set -euo pipefail
+
+# --- Configuration ---
+# Path to the compose file, relative to the project root.
+COMPOSE_FILE="docker/docker-compose.yml"
+# Default service for shorthand commands.
+DEFAULT_SERVICE="app"
+# Default working directory inside the container.
+DOCKER_WORKDIR="/app"
+
+
+# --- Help Text ---
+print_help() {
+  echo "Usage: ./bin/docker [command] [args...]"
+  echo ""
+  echo "A smart wrapper for Docker Compose that defaults to the '$DEFAULT_SERVICE' container."
+  echo "All arguments are passed to the executed command."
+  echo ""
+  echo "Shorthand Commands (for '$DEFAULT_SERVICE' container):"
+  echo "  ./bin/docker              # Open an interactive shell."
+  echo "  ./bin/docker <cmd...>     # Run a command (e.g., './bin/docker composer install --no-dev')."
+  echo ""
+  echo "Management Commands:"
+  echo "  up [service...]           Start services (default: all)."
+  echo "  down                      Stop and remove all containers."
+  echo "  build [service...]        Rebuild and restart services."
+  echo "  restart [service...]      Restart services."
+  echo "  logs [service...]         Follow log output."
+  echo "  exec <service> <cmd...>   Explicitly run a command in a different container."
+  echo "  help                      Show this help message."
+  echo ""
+  echo "Examples:"
+  echo "  ./bin/docker composer update --dry-run"
+  echo "  ./bin/docker phpcs --report=full src"
+  echo "  ./bin/docker build"
+  echo "  ./bin/docker exec db mysql -u root -p"
+}
+
+# --- Set Context to Project Root ---
+# This ensures the script works regardless of where it's called from.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$PROJECT_ROOT"
+
+
+# --- Core Function to Execute Commands in a Container ---
+run_in_container() {
+    local service="$1"
+    shift # The rest of the arguments are the command to run.
+    local cmd_array=("$@")
+
+    # If no command was provided, default to an interactive bash shell.
+    if [ ${#cmd_array[@]} -eq 0 ]; then
+        cmd_array=("bash")
+    fi
+
+    echo "--- Ensuring '$service' is running..."
+    docker compose -f "$COMPOSE_FILE" up -d "$service" >/dev/null 2>&1
+
+    local container_id
+    container_id=$(docker compose -f "$COMPOSE_FILE" ps -q "$service")
+
+    if [ -z "$container_id" ]; then
+        echo "Error: Could not find or start a container for service '$service'." >&2
+        exit 1
+    fi
+
+    # Use interactive flags only if the script is running in a terminal.
+    local exec_flags=()
+    if [ -t 0 ]; then
+        exec_flags+=("-it")
+    fi
+
+    if [ "$DEFAULT_SERVICE" = "$service" ]; then
+      exec_flags+=("-w" "$DOCKER_WORKDIR")
+    fi
+
+    echo "--- Running in '$service': ${cmd_array[*]} ---"
+    exec docker exec "${exec_flags[@]}" "$container_id" "${cmd_array[@]}"
+}
+
+
+# --- Main Command Router ---
+COMMAND="${1:-}" # Default to empty string if no args
+
+case "$COMMAND" in
+  # Consolidate simple management commands
+  up|down|build|restart)
+    echo "--- Running management command: $COMMAND ${*:2} ---"
+    docker compose -f "$COMPOSE_FILE" "$COMMAND" "${@:2}"
+    ;;
+
+  logs)
+    echo "--- Following logs for services: ${*:2} ---"
+    exec docker compose -f "$COMPOSE_FILE" logs -f "${@:2}"
+    ;;
+
+  exec)
+    shift # Remove 'exec' from the arguments list
+    if [ -z "$1" ]; then
+        echo "Error: 'exec' command requires a service name." >&2
+        print_help
+        exit 1
+    fi
+    run_in_container "$@"
+    ;;
+
+  help|--help)
+    print_help
+    ;;
+
+  *)
+    # Default Case: Any other command is executed in the default container.
+    run_in_container "$DEFAULT_SERVICE" "$@"
+    ;;
+esac

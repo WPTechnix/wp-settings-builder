@@ -1,0 +1,139 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, 'release/**' ]
+    paths-ignore:
+      # ignore markdowns and unrelated files
+      - '**.md'
+      - 'docker/**'
+      - '.husky/**'
+      - 'docs/**'
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.release-it.json'
+      - 'bin/copy'
+      - 'bin/docker'
+      - 'bin/composer'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/sync-docs-to-wiki.yml'
+      - '.github/workflows/commitlint.yml'
+      - '.github/workflows/release.yml'
+
+  pull_request:
+    branches: [ main, 'release/**' ]
+    paths-ignore:
+      # ignore markdowns and unrelated files
+      - '**.md'
+      - 'docker/**'
+      - '.husky/**'
+      - '.editorconfig'
+      - '.gitattributes'
+      - '.release-it.json'
+      - 'bin/copy'
+      - 'bin/docker'
+      - 'bin/composer'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/commitlint.yml'
+      - '.github/workflows/release.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # PHPCS - Test with both minimum and maximum PHP versions
+  # This ensures coding standards work with different dependency versions
+  lint:
+    name: Code Style (PHP ${{ matrix.php-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version: [8.0, 8.4]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          tools: composer
+          coverage: none
+
+      # Cache composer dependencies per PHP version
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php${{ matrix.php-version }}-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-php${{ matrix.php-version }}-composer-
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # For PRs: Only run on changed files (faster feedback)
+      - name: Run PHPCS on changed files (Pull Request)
+        if: github.event_name == 'pull_request'
+        run: |
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} -- '*.php' || echo '')
+
+          if [[ -n "$CHANGED_FILES" ]]; then
+            echo "$CHANGED_FILES" | xargs ./vendor/bin/phpcs --report=checkstyle --no-cache > phpcs-report-${{ matrix.php-version }}.xml || true
+          else
+            echo "No PHP files changed. Skipping PHPCS."
+            echo '<checkstyle/>' > phpcs-report-${{ matrix.php-version }}.xml
+          fi
+
+      # Only annotate from one PHP version to avoid duplicate comments
+      - name: Create annotations from PHPCS report (Pull Request)
+        if: github.event_name == 'pull_request' && matrix.php-version == '8.0'
+        uses: staabm/annotate-pull-request-from-checkstyle-action@v1
+        with:
+          files: phpcs-report-${{ matrix.php-version }}.xml
+          notices-as-warnings: true
+
+      # For pushes to main: Full scan as final safety check
+      - name: Run PHPCS full scan (Push)
+        if: github.event_name != 'pull_request'
+        run: ./vendor/bin/phpcs --no-cache
+
+  # PHPStan - Run on highest PHP version for maximum coverage
+  static-analysis:
+    name: Static Analysis (PHPStan)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php8.4-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-php8.4-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run PHPStan
+        run: ./vendor/bin/phpstan analyse --no-progress --error-format=github

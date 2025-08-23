@@ -1,0 +1,22 @@
+#!/bin/bash
+#
+# A wrapper script to run Composer commands inside the default app container.
+# It forwards all arguments to the main ./bin/docker script.
+#
+
+# --- Strict Mode ---
+# Ensures the script exits on error and handles variables safely.
+set -euo pipefail
+
+# --- Find the directory this script is in ---
+# This is important to reliably locate the main ./bin/docker script,
+# which should be in the same directory.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# The 'composer' command is passed as the first argument, followed by
+# all the arguments this script received ($@).
+#
+# Example: `./bin/composer install --no-dev`
+# Becomes: `./bin/docker composer install --no-dev`
+
+exec "$SCRIPT_DIR/docker" composer "$@"

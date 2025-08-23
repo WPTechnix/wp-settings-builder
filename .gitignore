@@ -1,0 +1,39 @@
+# Composer
+/vendor/
+/composer.lock
+
+# Node Modules
+/node_modules/
+# /package-lock.json
+
+# PHPUnit
+/phpunit.xml
+/.phpunit.result.cache
+
+# PHPCS
+phpcs.xml
+
+# PHPStan
+phpstan.neon
+
+# IDE
+/.idea/
+/.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & Reports
+*.log
+*.tmp
+/tmp/
+/reports/
+/logs/
+/old/
+
+# Environment
+/docker/.env
+/docker/php.ini

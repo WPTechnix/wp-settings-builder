@@ -1,0 +1,33 @@
+# .github/workflows/lint.yml
+name: Lint Commit Messages
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize]
+
+jobs:
+  commitlint:
+    name: Lint Commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install npm dependencies
+        run: npm install
+
+      - name: Validate all commits in PR
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          # When validating all commits in a PR, you need to use the
+          # base and head refs to determine the range of commits to lint.
+          # The action automatically gets these from the event payload.
+          # See: https://github.com/wagoid/commitlint-github-action#validating-all-commits-in-a-pr
+          first-parent: false

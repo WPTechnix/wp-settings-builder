@@ -1,0 +1,19 @@
+parameters:
+    phpVersion:
+        min: 80000
+        max: 80410
+
+    level: 8
+    tmpDir: /tmp/.phpstan
+    paths:
+        - src/
+
+    # Strict rules configuration
+    strictRules:
+        noVariableVariables: false
+
+    treatPhpDocTypesAsCertain: false
+
+includes:
+    - vendor/phpstan/phpstan-strict-rules/rules.neon
+    - vendor/szepeviktor/phpstan-wordpress/extension.neon

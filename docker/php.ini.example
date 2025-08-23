@@ -1,0 +1,17 @@
+; Error reporting
+error_reporting=E_ALL
+display_errors=On
+display_startup_errors=On
+log_errors=On
+error_log=/app/logs/php_errors.log
+
+; Xdebug configuration
+[xdebug]
+xdebug.mode=${XDEBUG_MODE:-off}
+xdebug.start_with_request=${XDEBUG_START_WITH_REQUEST:-no}
+xdebug.discover_client_host=${XDEBUG_DISCOVER_CLIENT_HOST:-false}
+xdebug.client_host=${XDEBUG_CLIENT_HOST:-host.docker.internal}
+xdebug.client_port=${XDEBUG_CLIENT_PORT:-9000}
+xdebug.idekey=${XDEBUG_IDEKEY:-PHPSTORM}
+xdebug.log_level=${XDEBUG_LOG_LEVEL:-0}
+xdebug.max_nesting_level=${XDEBUG_MAX_NESTING_LEVEL:-512}

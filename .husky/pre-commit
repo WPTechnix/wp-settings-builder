@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# Do not run on CI environments (e.g., GitHub Actions)
+if [ "$CI" = "true" ]; then
+  echo "CI environment detected. Skipping pre-push checks."
+  exit 0
+fi
+
+# Get staged file list
+# Use --diff-filter=d to exclude deleted files
+changed_files=$(git diff --cached --name-only --diff-filter=d)
+
+# Detect PHP or config changes
+if ! echo "$changed_files" | grep -qE '\.php$|^phpstan\.neon(\.dist)?$|^phpcs\.xml(\.dist)?$'; then
+  echo "No PHP or lint config changes detected. Skipping pre-commit checks."
+  exit 0
+fi
+
+# Check if ./bin/composer exists and Docker is installed
+if [ -f "./bin/composer" ] && command -v docker >/dev/null 2>&1; then
+  COMPOSER_CMD="./bin/composer"
+elif command -v composer >/dev/null 2>&1; then
+  COMPOSER_CMD="composer"
+else
+  echo "❌ Error: Neither ./bin/composer (with Docker installed) nor a global 'composer' command is available. Cannot run tests."
+  exit 1
+fi
+
+# Ensure vendor is available
+if [ ! -d "vendor" ]; then
+  echo "Vendor directory not found. Running composer install..."
+  $COMPOSER_CMD install --no-interaction --prefer-dist --no-progress
+fi
+
+# Run checks
+echo "Running phpcbf (auto-fixer)..."
+$COMPOSER_CMD fix:phpcbf || true
+echo "Adding fixes to git..."
+echo "$changed_files" | grep -E '\.php$' | xargs git add
+
+echo "Running phpcs..."
+$COMPOSER_CMD lint:phpcs
+
+echo "Running phpstan..."
+$COMPOSER_CMD lint:phpstan
+
+echo "✅ Pre-commit checks passed."
+
+exit 0
