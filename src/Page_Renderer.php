@@ -9,11 +9,12 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder;
 
+use InvalidArgumentException;
+
 /**
  * Class responsible for handling all HTML output for the settings page.
  */
 final class Page_Renderer {
-
 
 	/**
 	 * The HTML prefix that will be used in fields markup and generated CSS/JS.
@@ -27,9 +28,11 @@ final class Page_Renderer {
 	/**
 	 * Class Constructor
 	 *
+	 * @param Field_Factory  $field_factory Field factory.
 	 * @param Settings_Store $settings_store Settings store.
 	 */
 	public function __construct(
+		private Field_Factory $field_factory,
 		private Settings_Store $settings_store
 	) {}
 
@@ -56,12 +59,7 @@ final class Page_Renderer {
 
 			<?php
 			settings_errors();
-			?>
-
-			<?php
-			if ( $this->settings_store->has_tabs() ) :
-				$this->render_tabs();
-			endif;
+			$this->maybe_render_tabs();
 			?>
 
 			<!--suppress HtmlUnknownTarget -->
@@ -88,17 +86,81 @@ final class Page_Renderer {
 	 * The WordPress callback for rendering a settings field.
 	 *
 	 * @param array $args Arguments passed from `add_settings_field`.
+	 *
 	 * @phpstan-param array<non-empty-string, mixed> $args
 	 */
 	public function render_field( array $args ): void {
-		// TODO: Implement.
+		$field_id = $args['id'] ?? null;
+		if ( empty( $field_id ) || ! is_string( $field_id ) ) {
+			return;
+		}
+
+		$field_config = $this->settings_store->get_field( $field_id );
+
+		if ( empty( $field_config ) ) {
+			return;
+		}
+
+		$field_config['extras']                = $field_config['extras'] ?? [];
+		$field_config['extras']['html_prefix'] = $this->html_prefix;
+
+		try {
+			$field_object = $this->field_factory->create( $field_config['type'], $field_config );
+
+			$value = $this->settings_store->get( $field_id, $field_object->get_default_value() );
+
+			$field_attributes = $field_config['attributes'] ?? [];
+			if ( ! is_array( $field_attributes ) ) {
+				$field_attributes = [];
+			}
+
+			$conditional_attr = '';
+
+			if ( ! empty( $field_config['extras']['conditional'] ) ) {
+				$cond = $field_config['extras']['conditional'];
+				if ( ! is_array( $cond ) ) {
+					$cond = [];
+				}
+
+				$cond_field = $cond['field'] ?? '';
+				$cond_field = is_string( $cond_field ) ? $cond_field : '';
+
+				$cond_value = $cond['value'] ?? '';
+				$cond_value = is_string( $cond_value ) ? $cond_value : '';
+
+				$cond_operator = $cond['operator'] ?? '==';
+				$cond_operator = in_array( $cond_operator, [ '==', '!=', '>', '<', '>=', '<=' ], true ) ? $cond_operator : '==';
+
+				$conditional_attr = sprintf(
+					'data-conditional="%s" data-conditional-value="%s" data-conditional-operator="%s"',
+					esc_attr( $cond_field ),
+					esc_attr( $cond_value ),
+					esc_attr( $cond_operator )
+				);
+			}
+
+			printf( '<div class="%s-field-container" %s>', esc_attr( $this->html_prefix ), $conditional_attr ); // phpcs:ignore WordPress.Security.EscapeOutput
+
+			$field_object->render( $value, $field_attributes );
+
+			if ( ! empty( $field_config['extras']['description'] ) && 'description' !== $field_config['type'] ) {
+				echo '<p class="description">' . wp_kses_post( $field_config['extras']['description'] ) . '</p>';
+			}
+			echo '</div>';
+		} catch ( InvalidArgumentException $e ) {
+			echo '<p><strong>Error:</strong> ' . esc_html( $e->getMessage() ) . '</p>';
+		}
 	}
 
 
 	/**
 	 * Renders the navigation tabs for the settings page.
 	 */
-	private function render_tabs(): void {
+	private function maybe_render_tabs(): void {
+		if ( ! $this->settings_store->has_tabs() ) {
+			return;
+		}
+
 		$classes = implode(
 			' ',
 			[
@@ -108,13 +170,14 @@ final class Page_Renderer {
 		);
 
 		$active_tab = $this->settings_store->get_active_tab();
+		$page_slug  = $this->settings_store->get_page_slug();
 
 		echo '<nav class="' . esc_attr( $classes ) . '">';
 		foreach ( $this->settings_store->get_tabs() as $tab_id => $tab ) {
 			$url   = add_query_arg(
 				[
-					'page' => $this->settings_store->get_page_slug(),
-					'tab'  => $tab_id,
+					'page'       => $page_slug,
+					'active_tab' => $active_tab,
 				]
 			);
 			$class = 'nav-tab' . ( $tab_id === $active_tab ? ' nav-tab-active' : '' );
@@ -139,7 +202,7 @@ final class Page_Renderer {
 
 		$page_slug  = $this->settings_store->get_page_slug();
 		$active_tab = $this->settings_store->get_active_tab();
-		$sections   = $this->settings_store->get_sections();
+		$sections   = $this->settings_store->get_sections( $active_tab );
 
 		if ( empty( $wp_settings_sections[ $page_slug ] ) ) {
 			return;
@@ -151,13 +214,8 @@ final class Page_Renderer {
 				continue;
 			}
 
-			// Check if the section belongs to the currently active tab.
-			if ( $sections[ $section['id'] ]['tab_id'] !== $active_tab ) {
-				continue;
-			}
-
 			if ( $section['title'] ) {
-				echo '<h2>' . esc_html( $section['title'] ) . "</h2>\n";
+				echo '<h2>' . esc_html( $section['title'] ) . '</h2>';
 			}
 
 			if ( $section['callback'] ) {

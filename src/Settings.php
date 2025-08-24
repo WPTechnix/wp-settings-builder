@@ -124,7 +124,7 @@ final class Settings implements Settings_Interface {
 		$this->field_factory  = new Field_Factory();
 		$this->settings_store = new Settings_Store( $this->field_factory, $this->option_name, $this->page_slug );
 		$this->asset_manager  = new Asset_Manager();
-		$this->page_renderer  = new Page_Renderer( $this->settings_store );
+		$this->page_renderer  = new Page_Renderer( $this->field_factory, $this->settings_store );
 		$this->sanitizer      = new Sanitizer( $this->settings_store );
 	}
 

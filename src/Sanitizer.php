@@ -32,7 +32,9 @@ final class Sanitizer {
 	 *
 	 * @param mixed $input The raw input from the form submission (from `$_POST`).
 	 *
-	 * @return array<string, mixed> The complete, sanitized settings array ready for saving.
+	 * @return array The complete, sanitized settings array ready for saving.
+	 *
+	 * @phpstan-return array<string, mixed>
 	 */
 	public function sanitize( mixed $input ): array {
 		// TODO: Implement sanitization logic.

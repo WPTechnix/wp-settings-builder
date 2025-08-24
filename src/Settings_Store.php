@@ -111,7 +111,7 @@ final class Settings_Store {
 	 */
 	public function get( string $key, mixed $default_value = null ): mixed {
 		$this->fetch_settings();
-		if ( array_key_exists( $key, $this->saved_settings ) ) {
+		if ( isset( $this->saved_settings[ $key ] ) ) {
 			return $this->saved_settings[ $key ];
 		}
 
@@ -362,5 +362,20 @@ final class Settings_Store {
 			$this->fields,
 			static fn( $field ) => $field['section'] === $section_id
 		);
+	}
+
+	/**
+	 * Get the setting field.
+	 *
+	 * @param string $field_id The field ID to retrieve.
+	 *
+	 * @phpstan-param non-empty-string $field_id
+	 *
+	 * @return null|array
+	 *
+	 * @phpstan-return null|Field_Config
+	 */
+	public function get_field( string $field_id ): ?array {
+		return $this->fields[ $field_id ] ?? null;
 	}
 }
