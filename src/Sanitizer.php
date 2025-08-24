@@ -17,13 +17,11 @@ final class Sanitizer {
 	/**
 	 * Class Constructor
 	 *
-	 * @param null|string $active_tab The currently active tab.
-	 *
-	 * @phpstan-param null|non-empty-string $active_tab
+	 * @param Settings_Store $settings_store Settings Store.
 	 */
 	public function __construct(
 		// @phpstan-ignore-next-line
-		private ?string $active_tab
+		private Settings_Store $settings_store
 	) {}
 
 	/**

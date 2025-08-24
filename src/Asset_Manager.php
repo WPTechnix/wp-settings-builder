@@ -15,16 +15,24 @@ namespace WPTechnix\WP_Settings_Builder;
 final class Asset_Manager {
 
 	/**
-	 * Class Constructor
+	 * The HTML prefix that will be used in generated CSS/JS.
 	 *
-	 * @param string $html_prefix HTML prefix to use in assets.
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	private string $html_prefix = 'wptechnix-settings'; // @phpstan-ignore-line
+
+	/**
+	 * Set HTML prefix that will be used in generated CSS/JS.
+	 *
+	 * @param string $html_prefix HTML prefix.
 	 *
 	 * @phpstan-param non-empty-string $html_prefix
 	 */
-	public function __construct(
-		// @phpstan-ignore-next-line
-		private string $html_prefix
-	) {}
+	public function set_html_prefix( string $html_prefix ): void {
+		$this->html_prefix = $html_prefix;
+	}
 
 	/**
 	 * Enqueues all necessary scripts and styles for the settings page.
