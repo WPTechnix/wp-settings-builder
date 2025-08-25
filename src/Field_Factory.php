@@ -16,7 +16,11 @@ use WPTechnix\WP_Settings_Builder\Fields\Abstract_Field;
  * Creates instances of field objects based on their type.
  *
  * @phpstan-type Text_Field_Type 'text'|'textarea'|'number'|'email'|'password'|'url'
- * @phpstan-type Supported_Field_Type Text_Field_Type|'description'
+ * @phpstan-type Acceptence_Field_Type 'checkbox'|'toggle'
+ * @phpstan-type Single_Choice_Field_Type 'select'|'radio'|'buttons_group'
+ * @phpstan-type Multiple_Choice_Field_Type 'multiselect'|'multicheck'
+ *
+ * @phpstan-type Supported_Field_Type 'description'|Text_Field_Type|Acceptence_Field_Type|Single_Choice_Field_Type|Multiple_Choice_Field_Type
  *
  * @phpstan-import-type Field_Config from Abstract_Field
  */
@@ -39,13 +43,20 @@ final class Field_Factory {
 	 */
 	public function __construct() {
 		$this->fields = [
-			'text'        => Fields\Text_Field::class,
-			'textarea'    => Fields\Textarea_Field::class,
-			'number'      => Fields\Number_Field::class,
-			'email'       => Fields\Email_Field::class,
-			'password'    => Fields\Password_Field::class,
-			'url'         => Fields\Url_Field::class,
-			'description' => Fields\Description_Field::class,
+			'description'   => Fields\Description_Field::class,
+			'text'          => Fields\Text_Field::class,
+			'textarea'      => Fields\Textarea_Field::class,
+			'number'        => Fields\Number_Field::class,
+			'email'         => Fields\Email_Field::class,
+			'password'      => Fields\Password_Field::class,
+			'url'           => Fields\Url_Field::class,
+			'checkbox'      => Fields\Checkbox_Field::class,
+			'toggle'        => Fields\Toggle_Field::class,
+			'select'        => Fields\Select_Field::class,
+			'radio'         => Fields\Radio_Field::class,
+			'buttons_group' => Fields\Buttons_Group_Field::class,
+			'multiselect'   => Fields\Multiselect_Field::class,
+			'multicheck'    => Fields\Multicheck_Field::class,
 		];
 	}
 
@@ -58,17 +69,6 @@ final class Field_Factory {
 	 */
 	public function get_supported_types(): array {
 		return array_keys( $this->fields );
-	}
-
-	/**
-	 * Get text-based field types.
-	 *
-	 * @return string[] An array of inline field type identifiers.
-	 *
-	 * @phpstan-return Text_Field_Type[]
-	 */
-	public function get_text_types(): array {
-		return [ 'text', 'textarea', 'number', 'email', 'password', 'url' ];
 	}
 
 	/**

@@ -271,7 +271,17 @@ final class Settings implements Settings_Interface {
 		foreach ( $this->settings_store->get_fields() as $id => $field ) {
 			$args = $field;
 
-			if ( in_array( $field['type'], $this->field_factory->get_text_types(), true ) ) {
+			$field_type = $field['type'];
+
+			$inline_types     = [ 'text', 'textarea', 'number', 'email', 'password', 'url', 'select', 'multiselect' ];
+			$acceptence_types = [ 'checkbox', 'toggle' ];
+
+			$inline_field     = in_array( $field_type, $inline_types, true );
+			$acceptence_field = in_array( $field_type, $acceptence_types, true );
+
+			$no_description = empty( $field['extras']['description'] );
+
+			if ( $inline_field || ( $acceptence_field && $no_description ) ) {
 				$args['label_for'] = $id;
 			}
 
