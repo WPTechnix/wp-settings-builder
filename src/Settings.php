@@ -271,7 +271,11 @@ final class Settings implements Settings_Interface {
 		foreach ( $this->settings_store->get_fields() as $id => $field ) {
 			$args = $field;
 
-			if ( in_array( $field['type'], $this->field_factory->get_text_types(), true ) ) {
+			$field_type = $field['type'];
+
+			if ( in_array( $field_type, $this->field_factory->get_text_types(), true ) ||
+				( in_array( $field_type, [ 'checkbox', 'toggle' ], true ) && empty( $field['extras']['description'] ) )
+			) {
 				$args['label_for'] = $id;
 			}
 
