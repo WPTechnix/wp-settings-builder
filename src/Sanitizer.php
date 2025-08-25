@@ -9,6 +9,9 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder;
 
+use InvalidArgumentException;
+use Throwable;
+
 /**
  * Sanitizes settings before they are saved to the database.
  *
@@ -44,71 +47,93 @@ final class Sanitizer {
 	 * @phpstan-return array<string, mixed>
 	 */
 	public function sanitize( mixed $input ): array {
-		// 1. Fetch all previously saved options from the database.
-		// This is the base we'll be merging the new values into.
-		$option_name = $this->settings_store->get_option_name();
-		$old_options = get_option( $option_name, [] );
-		$old_options = is_array( $old_options ) ? $old_options : [];
+		$option_name  = $this->settings_store->get_option_name();
+		$option_group = $this->settings_store->get_option_group_name();
+		$old_options  = get_option( $option_name, [] );
+		$old_options  = is_array( $old_options ) ? $old_options : [];
 
-		// If the submitted data isn't an array, it's invalid. Return the old
-		// options to prevent data loss and show a settings error.
 		if ( ! is_array( $input ) ) {
+			add_settings_error(
+				$option_group,
+				'error_invalid_input',
+				'Invalid input received from submission. Please try again.'
+			);
 			return $old_options;
 		}
 
-		// 2. Determine which fields we need to process from this submission.
 		$fields_to_process = $this->get_fields_to_process();
 		$new_values        = [];
 
 		foreach ( $fields_to_process as $field_id => $field_config ) {
-			$raw_value  = $input[ $field_id ] ?? null;
-			$field_type = $field_config['type'];
+			try {
+				$raw_value  = $input[ $field_id ] ?? null;
+				$field_type = $field_config['type'];
 
-			if ( 'description' === $field_type ) {
-				continue; // Description-only fields have no value to save.
+				if ( 'description' === $field_type ) {
+					continue;
+				}
+
+				// Handle custom validation first.
+				$validation_callback = $field_config['extras']['validation_callback'] ?? null;
+				if ( is_callable( $validation_callback ) ) {
+					try {
+						$result = $validation_callback( $raw_value, $field_config );
+						if ( true !== $result ) {
+							$error_message = is_string( $result ) && ! empty( $result )
+								? $result
+								: sprintf( 'Validation failed for the "%s" field.', $field_config['title'] );
+
+							add_settings_error( $option_group, 'error_validation_' . $field_id, $error_message );
+
+							// Revert to the old value and skip to the next field.
+							$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
+							continue;
+						}
+					} catch ( Throwable $e ) {
+						$error_message = sprintf( 'An error occurred during validation for the "%s" field.', $field_config['title'] );
+
+						if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+							$error_message .= " {$e->getMessage()}";
+						}
+
+						add_settings_error( $option_group, 'error_validation_' . $field_id, $error_message );
+
+						$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
+						continue;
+					}
+				}
+
+				// If validation passes, proceed with sanitization.
+				$field_object            = $this->field_factory->create( $field_type, $field_config );
+				$sanitized_value         = $field_object->sanitize( $raw_value );
+				$new_values[ $field_id ] = $sanitized_value;
+			} catch ( InvalidArgumentException $e ) {
+				// This catches errors from the Field_Factory or field constructor.
+				add_settings_error( $option_group, 'error_field_config_' . $field_id, esc_html( $e->getMessage() ) );
+				$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
 			}
-
-			$field_object = $this->field_factory->create( $field_type, $field_config );
-
-			// If a value is not submitted (e.g., an unchecked checkbox),
-			// it will be null. The field's sanitize method is responsible
-			// for handling this to return its correct "off" state.
-			$sanitized_value = $field_object->sanitize( $raw_value );
-
-			// Store the processed value.
-			$new_values[ $field_id ] = $sanitized_value;
 		}
 
-		// 3. Merge the newly sanitized values into the old options and return.
-		// This preserves all settings from other tabs not in this submission.
 		return array_merge( $old_options, $new_values );
 	}
 
 	/**
 	 * Determines which fields should be processed in the current request.
 	 *
-	 * If tabs are enabled, it returns only the fields for the active tab.
-	 * Otherwise, it returns all registered fields.
-	 *
 	 * @return array
-	 *
 	 * @phpstan-return array<non-empty-string, Field_Config>
 	 */
 	private function get_fields_to_process(): array {
-		// If the settings page does not use tabs, process all registered fields.
 		if ( ! $this->settings_store->has_tabs() ) {
 			return $this->settings_store->get_fields();
 		}
 
 		$active_tab = $this->settings_store->get_active_tab();
 
-		// Failsafe: if tabs are enabled but for some reason no tab is active,
-		// process nothing to prevent accidental data loss.
 		if ( null === $active_tab ) {
 			return [];
 		}
 
-		// Get the IDs of all sections that belong to the active tab.
 		$sections_on_tab    = $this->settings_store->get_sections( $active_tab );
 		$section_ids_on_tab = array_keys( $sections_on_tab );
 
@@ -116,8 +141,6 @@ final class Sanitizer {
 			return [];
 		}
 
-		// Filter all registered fields to get only those belonging to one of the
-		// sections on the active tab.
 		return array_filter(
 			$this->settings_store->get_fields(),
 			static fn( array $field ): bool => in_array( $field['section'], $section_ids_on_tab, true )

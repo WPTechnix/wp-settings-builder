@@ -101,7 +101,6 @@ final class Page_Renderer {
 			return;
 		}
 
-		$field_config['extras']                = $field_config['extras'] ?? [];
 		$field_config['extras']['html_prefix'] = $this->html_prefix;
 
 		try {
