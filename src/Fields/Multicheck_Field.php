@@ -12,7 +12,7 @@ namespace WPTechnix\WP_Settings_Builder\Fields;
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Choices_Trait;
 
 /**
- * Handles rendering and sanitization for a field with multiple checkboxes.
+ * Multicheck Field Class
  */
 final class Multicheck_Field extends Abstract_Field {
 
