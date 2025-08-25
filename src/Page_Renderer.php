@@ -109,7 +109,7 @@ final class Page_Renderer {
 
 			$value = $this->settings_store->get( $field_id, $field_object->get_default_value() );
 
-			$field_attributes = $field_config['attributes'] ?? [];
+			$field_attributes = $field_config['extras']['attributes'] ?? [];
 			if ( ! is_array( $field_attributes ) ) {
 				$field_attributes = [];
 			}
@@ -176,8 +176,8 @@ final class Page_Renderer {
 		foreach ( $this->settings_store->get_tabs() as $tab_id => $tab ) {
 			$url   = add_query_arg(
 				[
-					'page'       => $page_slug,
-					'active_tab' => $active_tab,
+					'page' => $page_slug,
+					'tab'  => $active_tab,
 				]
 			);
 			$class = 'nav-tab' . ( $tab_id === $active_tab ? ' nav-tab-active' : '' );
