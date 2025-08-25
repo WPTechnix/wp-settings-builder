@@ -15,8 +15,8 @@ use WPTechnix\WP_Settings_Builder\Fields\Abstract_Field;
 /**
  * Creates instances of field objects based on their type.
  *
- * @phpstan-type Text_Field_Type 'text'
- * @phpstan-type Supported_Field_Type Text_Field_Type
+ * @phpstan-type Text_Field_Type 'text'|'textarea'|'number'|'email'|'password'|'url'
+ * @phpstan-type Supported_Field_Type Text_Field_Type|'description'
  *
  * @phpstan-import-type Field_Config from Abstract_Field
  */
@@ -39,7 +39,13 @@ final class Field_Factory {
 	 */
 	public function __construct() {
 		$this->fields = [
-			// TODO: add fields.
+			'text'        => Fields\Text_Field::class,
+			'textarea'    => Fields\Textarea_Field::class,
+			'number'      => Fields\Number_Field::class,
+			'email'       => Fields\Email_Field::class,
+			'password'    => Fields\Password_Field::class,
+			'url'         => Fields\Url_Field::class,
+			'description' => Fields\Description_Field::class,
 		];
 	}
 
@@ -62,7 +68,7 @@ final class Field_Factory {
 	 * @phpstan-return Text_Field_Type[]
 	 */
 	public function get_text_types(): array {
-		return [];
+		return [ 'text', 'textarea', 'number', 'email', 'password', 'url' ];
 	}
 
 	/**
