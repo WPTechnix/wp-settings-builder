@@ -34,7 +34,21 @@ final class Text_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): string {
-		return sanitize_text_field( is_scalar( $value ) ? (string) $value : '' );
+	public function get_default_value(): ?string {
+		$default_value = parent::get_default_value();
+		return is_scalar( $default_value ) ? (string) $default_value : null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function sanitize( mixed $value ): ?string {
+
+		$default_value     = $this->get_default_value();
+		$sanitized_default = is_string( $default_value ) ? sanitize_text_field( $default_value ) : null;
+
+		return is_scalar( $value ) ?
+			sanitize_text_field( (string) $value ) :
+			$sanitized_default;
 	}
 }

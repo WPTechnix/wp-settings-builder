@@ -34,8 +34,16 @@ final class Password_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): string {
+	public function get_default_value(): ?string {
+		$default_value = parent::get_default_value();
+		return is_scalar( $default_value ) ? (string) $default_value : null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function sanitize( mixed $value ): ?string {
 		// Passwords should not be modified beyond scalar casting.
-		return is_scalar( $value ) ? (string) $value : '';
+		return is_scalar( $value ) ? (string) $value : $this->get_default_value();
 	}
 }

@@ -32,9 +32,21 @@ final class Email_Field extends Abstract_Field {
 	}
 
 	/**
+	 * Get the default value for the field.
+	 *
+	 * @return string|null
+	 */
+	public function get_default_value(): ?string {
+		$default_value = parent::get_default_value();
+		return is_string( $default_value ) ? $default_value : null;
+	}
+
+	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): string {
-		return sanitize_email( is_scalar( $value ) ? (string) $value : '' );
+	public function sanitize( mixed $value ): ?string {
+		$default_value     = $this->get_default_value();
+		$sanitized_default = is_string( $default_value ) ? sanitize_email( $default_value ) : null;
+		return is_string( $value ) ? sanitize_email( $value ) : $sanitized_default;
 	}
 }

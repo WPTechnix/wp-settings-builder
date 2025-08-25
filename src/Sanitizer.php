@@ -53,13 +53,6 @@ final class Sanitizer {
 		// If the submitted data isn't an array, it's invalid. Return the old
 		// options to prevent data loss and show a settings error.
 		if ( ! is_array( $input ) ) {
-			add_settings_error(
-				$this->settings_store->get_option_group_name(),
-				'invalid_input_type',
-				__( 'Settings data received was not in the expected format. No changes were saved.', 'default' ),
-				'error'
-			);
-
 			return $old_options;
 		}
 

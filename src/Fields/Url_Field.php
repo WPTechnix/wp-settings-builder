@@ -34,7 +34,18 @@ final class Url_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): string {
-		return esc_url_raw( (string) $value );
+	public function get_default_value(): ?string {
+		$default_value = parent::get_default_value();
+		return is_string( $default_value ) ? $default_value : null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function sanitize( mixed $value ): ?string {
+		$default_value   = $this->get_default_value();
+		$sanitized_value = is_string( $default_value ) ? esc_url_raw( $default_value ) : null;
+
+		return is_string( $value ) ? esc_url_raw( $value ) : $sanitized_value;
 	}
 }

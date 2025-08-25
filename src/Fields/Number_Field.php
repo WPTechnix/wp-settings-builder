@@ -25,7 +25,7 @@ final class Number_Field extends Abstract_Field {
 			'<input type="number" id="%s" name="%s" value="%s" %s />',
 			esc_attr( $this->field_config['id'] ),
 			esc_attr( $this->field_config['name'] ),
-			esc_attr( is_numeric( $value ) ? strval( $value ) : '' ),
+			esc_attr( is_numeric( $value ) ? (string) $value : '' ),
 			$this->build_attributes_string( $merged_attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 	}
@@ -33,18 +33,15 @@ final class Number_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): float {
-		if ( ! is_numeric( $value ) ) {
-			return 0;
-		}
-		return (float) $value;
+	public function get_default_value(): ?float {
+		$default_value = parent::get_default_value();
+		return is_numeric( $default_value ) ? (float) $default_value : null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_default_value(): float {
-		$default_value = parent::get_default_value();
-		return is_numeric( $default_value ) ? (float) $default_value : 0;
+	public function sanitize( mixed $value ): ?float {
+		return is_numeric( $value ) ? (float) $value : $this->get_default_value();
 	}
 }
