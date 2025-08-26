@@ -12,23 +12,48 @@ namespace WPTechnix\WP_Settings_Builder\Fields;
 /**
  * Text Field Class
  */
-final class Text_Field extends Abstract_Field {
+class Text_Field extends Abstract_Field {
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'text';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
-		$default_attributes = [ 'class' => 'regular-text' ];
+	public function render(): void {
+		$this->render_field( 'text' );
+	}
 
-		$merged_attributes = array_merge( $default_attributes, $attributes );
-
+	/**
+	 * Renders the field.
+	 *
+	 * @param string $type The type of input field to render.
+	 *
+	 * @phpstan-param non-empty-string $type
+	 */
+	public function render_field( string $type ): void {
 		printf(
-			'<input type="text" id="%s" name="%s" value="%s" %s />',
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
-			esc_attr( is_scalar( $value ) ? (string) $value : '' ),
-			$this->build_attributes_string( $merged_attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
+			'<input type="%s" id="%s" name="%s" value="%s" %s />',
+			esc_attr( $type ),
+			esc_attr( $this->get_id() ),
+			esc_attr( $this->get_name() ),
+			esc_attr( (string) $this->get_value() ),
+			$this->get_extra_html_attributes_string( [ 'class' => 'regular-text' ] ) // phpcs:ignore WordPress.Security.EscapeOutput
 		);
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_value(): ?string {
+		$value = parent::get_value();
+		return is_scalar( $value ) ? (string) $value : null;
 	}
 
 	/**
@@ -47,8 +72,15 @@ final class Text_Field extends Abstract_Field {
 		$default_value     = $this->get_default_value();
 		$sanitized_default = is_string( $default_value ) ? sanitize_text_field( $default_value ) : null;
 
-		return is_scalar( $value ) ?
-			sanitize_text_field( (string) $value ) :
-			$sanitized_default;
+		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : $sanitized_default;
+	}
+
+	/**
+	 * Should use inline title as the field label?
+	 *
+	 * @return bool
+	 */
+	public function should_use_inline_title_as_label(): bool {
+		return true;
 	}
 }

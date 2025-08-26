@@ -9,37 +9,38 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Choices_Trait;
-
 /**
  * Buttons Group Field Class
+ *
+ * @phpstan-type Field_Type 'buttons_group'
+ *
+ * @phpstan-extends Choice_Field<Field_Type>
  */
-final class Buttons_Group_Field extends Abstract_Field {
+final class Buttons_Group_Field extends Choice_Field {
 
-	use Has_Choices_Trait;
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'buttons_group';
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
-	public function render( mixed $value, array $attributes ): void {
+	public function render(): void {
 		$options     = $this->get_options();
-		$html_prefix = $this->field_config['extras']['html_prefix'];
+		$html_prefix = $this->get_html_prefix();
 
 		$buttons_html = [];
 
 		foreach ( $options as $option_value => $option_label ) {
 			// Create a unique ID for each radio button for the label's 'for' attribute.
-			$radio_id   = $this->field_config['id'] . '_' . sanitize_key( (string) $option_value );
-			$is_checked = ( (string) $value === (string) $option_value );
-
-			// Determine the classes for the label to control its appearance.
-			$label_classes   = [
-				$html_prefix . '-button-group-label',
-				$is_checked ? $html_prefix . '-button-group-label-active' : '',
-			];
-			$label_class_str = trim( implode( ' ', $label_classes ) );
+			$radio_id = $this->get_id() . '_' . sanitize_key( (string) $option_value );
 
 			$buttons_html[] = sprintf(
 				'<label for="%s" class="%s">
@@ -47,14 +48,14 @@ final class Buttons_Group_Field extends Abstract_Field {
 					<span class="%s-button-group-text">%s</span>
 				</label>',
 				esc_attr( $radio_id ),
-				esc_attr( $label_class_str ),
+				esc_attr( $html_prefix . '-button-group-label' ),
 				esc_attr( $radio_id ),
-				esc_attr( $this->field_config['name'] ),
+				esc_attr( $this->get_name() ),
 				esc_attr( (string) $option_value ),
-				checked( true, $is_checked, false ),
-				$this->build_attributes_string( $attributes ), // phpcs:ignore WordPress.Security.EscapeOutput
+				checked( $this->get_value(), (string) $option_value, false ),
+				$this->get_extra_html_attributes_string(),
 				esc_attr( $html_prefix ),
-				esc_html( (string) $option_label )
+				esc_html( $option_label )
 			);
 		}
 
@@ -64,25 +65,5 @@ final class Buttons_Group_Field extends Abstract_Field {
 			esc_attr( $html_prefix ),
 			implode( "\n", $buttons_html ) // phpcs:ignore WordPress.Security.EscapeOutput
 		);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): ?string {
-		$default_value = parent::get_default_value();
-
-		return $this->is_valid_choice( $default_value )
-			? (string) $default_value
-			: null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function sanitize( mixed $value ): ?string {
-		return $this->is_valid_choice( $value )
-			? (string) $value
-			: $this->get_default_value();
 	}
 }

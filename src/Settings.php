@@ -1,8 +1,9 @@
 <?php
 /**
- * A fluent builder for creating and managing WordPress admin settings pages.
+ * The public-facing factory for creating and configuring a settings page.
  *
  * @package WPTechnix\WP_Settings_Builder
+ * @author WPTechnix <developers@wptechnix.com>
  */
 
 declare(strict_types=1);
@@ -10,70 +11,45 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder;
 
 use InvalidArgumentException;
-use WPTechnix\WP_Settings_Builder\Interfaces\Settings_Interface;
+use WPTechnix\WP_Settings_Builder\Fields;
+use WPTechnix\WP_Settings_Builder\Interfaces\Field_Factory_Interface;
+use WPTechnix\WP_Settings_Builder\Fields\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Interfaces\Persistence_Interface;
 
 /**
- * A fluent builder for creating and managing WordPress admin settings pages.
+ * Class Settings_Page_Factory
  *
- * @phpstan-import-type Supported_Field_Type from Field_Factory
+ * This is the main entry point for the library. It provides a fluent interface
+ * for developers to define the structure of a settings page. Its `init()` method
+ * acts as the Composition Root, assembling all necessary services and activating the page.
+ *
+ * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Sections_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Field_Extras from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
-final class Settings implements Settings_Interface {
+final class Settings {
 
 	/**
-	 * Instance of the factory responsible for creating field objects.
-	 *
-	 * @var Field_Factory
-	 */
-	private Field_Factory $field_factory;
-
-	/**
-	 * Store for retrieving settings data.
-	 *
-	 * @var Settings_Store
-	 */
-	private Settings_Store $settings_store;
-
-	/**
-	 * Instance of the asset manager responsible for enqueuing scripts and styles.
-	 *
-	 * @var Asset_Manager
-	 */
-	private Asset_Manager $asset_manager;
-
-	/**
-	 * Instance of the page renderer responsible for rendering the settings page.
-	 *
-	 * @var Page_Renderer
-	 */
-	private Page_Renderer $page_renderer;
-
-	/**
-	 * Sanitizer instance.
-	 *
-	 * @var Sanitizer
-	 */
-	private Sanitizer $sanitizer;
-
-	/**
-	 * Page Title
+	 * The main title of the settings page, displayed in the `<h1>` tag.
 	 *
 	 * @var string
 	 *
 	 * @phpstan-var non-empty-string
 	 */
-	private string $page_title;
+	private string $page_title = 'Settings';
 
 	/**
-	 * Menu Title
+	 * The title displayed in the WordPress admin menu.
 	 *
 	 * @var string
 	 *
 	 * @phpstan-var non-empty-string
 	 */
-	private string $menu_title;
+	private string $menu_title = 'Settings';
 
 	/**
-	 * Capability required to access the settings page.
+	 * The WordPress capability required to access and save the settings page.
 	 *
 	 * @var string
 	 *
@@ -82,7 +58,7 @@ final class Settings implements Settings_Interface {
 	private string $capability = 'manage_options';
 
 	/**
-	 * Parent slug for the submenu page.
+	 * The slug of the parent menu page under which this page will appear.
 	 *
 	 * @var string
 	 *
@@ -91,51 +67,99 @@ final class Settings implements Settings_Interface {
 	private string $parent_slug = 'options-general.php';
 
 	/**
-	 * Settings constructor.
+	 * A map of tab configurations.
 	 *
-	 * Initializes the settings framework with essential parameters and default configurations.
+	 * @var array
 	 *
-	 * @param string $option_name The name of the option to be stored in the wp_options table.
-	 * @param string $page_slug   The unique slug for the settings page URL.
+	 * @phpstan-var Tabs_Map
+	 */
+	private array $tabs = [];
+
+	/**
+	 * A map of section configurations.
+	 *
+	 * @var array
+	 *
+	 * @phpstan-var Sections_Map
+	 */
+	private array $sections = [];
+
+	/**
+	 * A map of field configurations.
+	 *
+	 * @var array
+	 *
+	 * @phpstan-var Fields_Map
+	 */
+	private array $fields = [];
+
+	/**
+	 * The internal factory for creating field objects.
+	 *
+	 * @var Field_Factory_Interface
+	 */
+	private Field_Factory_Interface $field_factory;
+
+	/**
+	 * The persistence service for storing and retrieving settings data.
+	 *
+	 * @var Persistence_Interface
+	 */
+	private Persistence_Interface $persistence;
+
+	/**
+	 * Default Field classes.
+	 *
+	 * @var array
+	 *
+	 * @phpstan-var list<class-string<Abstract_Field>>
+	 */
+	private array $default_field_classes = [
+		Fields\Buttons_Group_Field::class,
+		Fields\Checkbox_Field::class,
+		Fields\Choice_Field::class,
+		Fields\Description_Field::class,
+		Fields\Email_Field::class,
+		Fields\Multicheck_Field::class,
+		Fields\Multiselect_Field::class,
+		Fields\Number_Field::class,
+		Fields\Password_Field::class,
+		Fields\Select_Field::class,
+		Fields\Textarea_Field::class,
+		Fields\Text_Field::class,
+		Fields\Toggle_Field::class,
+		Fields\Url_Field::class,
+	];
+
+	/**
+	 * Factory constructor.
+	 *
+	 * @param string $option_name The key for storing all settings data in the `wp_options` table.
+	 * @param string $page_slug   The unique URL slug for the admin page.
 	 *
 	 * @phpstan-param non-empty-string $option_name
 	 * @phpstan-param non-empty-string $page_slug
-	 *
-	 * @throws InvalidArgumentException If option_name or page_slug are empty.
 	 */
 	public function __construct(
 		private string $option_name,
 		private string $page_slug
 	) {
-		if ( empty( $this->option_name ) ) {
-			throw new InvalidArgumentException( 'Option name cannot be empty.' );
+		$this->field_factory = new Field_Factory();
+		foreach ( $this->default_field_classes as $class ) {
+			$this->field_factory->register( $class );
 		}
 
-		if ( empty( $this->page_slug ) ) {
-			throw new InvalidArgumentException( 'Page slug cannot be empty.' );
-		}
-
-		$default_page_title = __( 'Settings', 'default' );
-
-		/** @phpstan-var non-empty-string $default_page_title */
-		$this->page_title = $default_page_title;
-		$this->menu_title = $this->page_title;
-
-		$this->field_factory  = new Field_Factory();
-		$this->settings_store = new Settings_Store( $this->field_factory, $this->option_name, $this->page_slug );
-		$this->asset_manager  = new Asset_Manager();
-		$this->page_renderer  = new Page_Renderer( $this->field_factory, $this->settings_store );
-		$this->sanitizer      = new Sanitizer( $this->field_factory, $this->settings_store );
+		$this->persistence = new Wp_Options_Persistence( $this->option_name );
 	}
 
-	/*
-	|--------------------------------------------------------------------------
-	| Setters
-	|--------------------------------------------------------------------------
-	*/
-
 	/**
-	 * {@inheritDoc}
+	 * Sets the main title of the settings page.
+	 *
+	 * @param string $page_title  The title displayed at the top of the page.
+	 *
+	 * @phpstan-param non-empty-string $page_title
+	 *
+	 * @return self
 	 */
 	public function set_page_title( string $page_title ): self {
 		$this->page_title = $page_title;
@@ -143,7 +167,13 @@ final class Settings implements Settings_Interface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Sets the title for the admin menu item.
+	 *
+	 * @param string $menu_title The text for the menu link.
+	 *
+	 * @phpstan-param non-empty-string $menu_title
+	 *
+	 * @return self
 	 */
 	public function set_menu_title( string $menu_title ): self {
 		$this->menu_title = $menu_title;
@@ -151,7 +181,13 @@ final class Settings implements Settings_Interface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Sets the WordPress capability required to view and save the settings page.
+	 *
+	 * @param string $capability A valid WordPress capability string (e.g., 'manage_options').
+	 *
+	 * @phpstan-param non-empty-string $capability
+	 *
+	 * @return self
 	 */
 	public function set_capability( string $capability ): self {
 		$this->capability = $capability;
@@ -159,7 +195,13 @@ final class Settings implements Settings_Interface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Sets the parent menu page slug.
+	 *
+	 * @param string $parent_slug The slug of the parent menu (e.g., 'options-general.php', 'themes.php').
+	 *
+	 * @phpstan-param non-empty-string $parent_slug
+	 *
+	 * @return self
 	 */
 	public function set_parent_slug( string $parent_slug ): self {
 		$this->parent_slug = $parent_slug;
@@ -167,132 +209,182 @@ final class Settings implements Settings_Interface {
 	}
 
 	/**
-	 * {@inheritDoc}
-	 */
-	public function set_html_prefix( string $html_prefix ): self {
-		$this->asset_manager->set_html_prefix( $html_prefix );
-		$this->page_renderer->set_html_prefix( $html_prefix );
-		return $this;
-	}
-
-	/*
-	|--------------------------------------------------------------------------
-	| Fluent Configuration Methods
-	|--------------------------------------------------------------------------
-	*/
-
-	/**
-	 * {@inheritDoc}
+	 * Adds a navigation tab to the settings page.
+	 *
+	 * @param string      $id A unique identifier for the tab.
+	 * @param string      $title The visible title of the tab.
+	 * @param string|null $icon  Optional. A Dashicons class for an icon (e.g., 'dashicons-admin-generic').
+	 *
+	 * @phpstan-param non-empty-string      $id A unique identifier for the tab.
+	 * @phpstan-param non-empty-string      $title The visible title of the tab.
+	 * @phpstan-param non-empty-string|null $icon  Optional. A Dashicons class for an icon (e.g., 'dashicons-admin-generic').
+	 *
+	 * @return self
 	 */
 	public function add_tab( string $id, string $title, ?string $icon = null ): self {
-		$this->settings_store->add_tab( $id, $title, $icon );
+		$sanitized_id = sanitize_key( $id );
+		/** @phpstan-var non-empty-string $sanitized_id */
+		$this->tabs[ $sanitized_id ] = [
+			'id'    => $sanitized_id,
+			'title' => $title,
+			'icon'  => $icon ?? '',
+		];
 		return $this;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Adds a settings section to group related fields.
+	 *
+	 * @param string      $id          A unique identifier for the section.
+	 * @param string      $title       The visible title of the section.
+	 * @param string|null $description Optional. A short description displayed below the section title.
+	 * @param string|null $tab_id      Optional. The ID of the tab this section belongs to.
+	 *
+	 * @phpstan-param non-empty-string $id
+	 * @phpstan-param non-empty-string $title
+	 * @phpstan-param non-empty-string|null $description
+	 * @phpstan-param non-empty-string|null $tab_id
+	 *
+	 * @return self
+	 *
+	 * @throws InvalidArgumentException When the specified tab does not exist.
 	 */
 	public function add_section( string $id, string $title, ?string $description = null, ?string $tab_id = null ): self {
-		$this->settings_store->add_section( $id, $title, $description, $tab_id );
+		if ( ! empty( $tab_id ) && ! isset( $this->tabs[ $tab_id ] ) ) {
+			throw new InvalidArgumentException( sprintf( 'Cannot add section "%s" to non-existent tab "%s".', $id, $tab_id ) );
+		}
+		$sanitized_id     = sanitize_key( $id );
+		$sanitized_tab_id = ! empty( $tab_id ) ? sanitize_key( $tab_id ) : null;
+		/** @phpstan-var non-empty-string $sanitized_id */
+		/** @phpstan-var non-empty-string|null $sanitized_tab_id */
+		$this->sections[ $sanitized_id ] = [
+			'id'          => $sanitized_id,
+			'title'       => $title,
+			'description' => $description,
+			'tab'         => $sanitized_tab_id,
+		];
 		return $this;
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Adds a setting field to a specified section.
+	 *
+	 * @param string $id         A unique identifier for the field.
+	 * @param string $section_id The ID of the section this field belongs to.
+	 * @param string $type       The type of field (e.g., 'text', 'toggle', 'select').
+	 * @param string $title      The label displayed for the field.
+	 * @param array  $extras     Optional. Additional arguments for the field (e.g., 'description', 'options').
+	 *
+	 * @phpstan-param non-empty-string $id
+	 * @phpstan-param non-empty-string $section_id
+	 * @phpstan-param non-empty-string $type
+	 * @phpstan-param non-empty-string $title
+	 * @phpstan-param Field_Extras $extras
+	 *
+	 * @return self
+	 *
+	 * @throws InvalidArgumentException When the specified section does not exist or non-registered field-type called.
 	 */
 	public function add_field( string $id, string $section_id, string $type, string $title, array $extras = [] ): self {
-		$this->settings_store->add_field( $id, $section_id, $type, $title, $extras );
+		$sanitized_id = sanitize_key( $id );
+		if ( ! isset( $this->sections[ $section_id ] ) ) {
+			throw new InvalidArgumentException( sprintf( 'Cannot add field "%s" to non-existent section "%s".', $id, $section_id ) );
+		}
+
+		$registered_fields = $this->field_factory->get_registered_fields();
+		if ( ! isset( $registered_fields[ $type ] ) ) {
+			throw new InvalidArgumentException(
+				sprintf( 'Field type "%s" is not registered.', $type )
+			);
+		}
+
+		/** @phpstan-var non-empty-string $sanitized_id */
+		$this->fields[ $sanitized_id ] = [
+			'id'      => $sanitized_id,
+			'title'   => $title,
+			'section' => $section_id,
+			'type'    => $type,
+			'name'    => $this->option_name . '[' . $sanitized_id . ']',
+			'extras'  => $extras,
+		];
 		return $this;
 	}
 
-	/*
-	|--------------------------------------------------------------------------
-	| Core Methods
-	|--------------------------------------------------------------------------
-	*/
+	/**
+	 * Registers a custom field class with the framework.
+	 *
+	 * This method allows developers to add their own custom field types. The provided
+	 * class must extend `Abstract_Field`.
+	 *
+	 * @param string $field_class The fully qualified class name of the custom field.
+	 *
+	 * @phpstan-param class-string<Fields\Abstract_Field> $field_class
+	 *
+	 * @return self
+	 */
+	public function register_field_class( string $field_class ): self {
+		$this->field_factory->register( $field_class );
+		return $this;
+	}
 
 	/**
-	 * {@inheritDoc}
+	 * Assembles all services, creates the page definition, and hooks into WordPress.
+	 * This method is the final call after the page has been configured. It builds and
+	 * activates the entire settings page.
 	 */
 	public function init(): void {
-		add_action( 'admin_menu', [ $this, 'register_page' ] );
-		add_action( 'admin_init', [ $this, 'register_settings' ] );
-		add_action( 'admin_enqueue_scripts', [ $this->asset_manager, 'enqueue' ] );
-	}
 
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get( string $key, mixed $default_value = null ): mixed {
-		return $this->settings_store->get( $key, $default_value );
-	}
+		$sanitizer = new Sanitizer( $this->field_factory );
+		$renderer  = new Html_Renderer( $this->field_factory );
 
-	/**
-	 * Registers the settings page with the WordPress admin menu.
-	 *
-	 * @internal This method is a callback for the 'admin_menu' hook and should not be called directly.
-	 */
-	public function register_page(): void {
-		add_submenu_page(
-			$this->parent_slug,
+		$definition = new Page_Definition(
+			$this->option_name,
+			$this->page_slug,
 			$this->page_title,
 			$this->menu_title,
 			$this->capability,
-			$this->page_slug,
-			[ $this->page_renderer, 'render_page' ]
+			$this->parent_slug,
+			$this->tabs,
+			$this->sections,
+			$this->fields
 		);
+
+		$asset_manager = new Asset_Manager();
+
+		$hooks_registrar = new Hooks_Registrar(
+			$definition,
+			$this->persistence,
+			$renderer,
+			$sanitizer,
+			$asset_manager,
+		);
+
+		$hooks_registrar->init();
 	}
 
 	/**
-	 * Registers the settings, sections, and fields with the WordPress Settings API.
+	 * Get the setting value.
 	 *
-	 * @internal This method is a callback for the 'admin_init' hook and should not be called directly.
+	 * @param string $key           The specific option key (field ID) to retrieve.
+	 * @param mixed  $default_value A final fallback value if no other value is available.
+	 *
+	 * @phpstan-param non-empty-string $key
+	 *
+	 * @return mixed
 	 */
-	public function register_settings(): void {
-		register_setting(
-			$this->settings_store->get_option_group_name(),
-			$this->option_name,
-			[ 'sanitize_callback' => [ $this->sanitizer, 'sanitize' ] ]
-		);
+	public function get_setting( string $key, mixed $default_value = null ): mixed {
+		return $this->persistence->get( $key, $default_value );
+	}
 
-		foreach ( $this->settings_store->get_sections() as $id => $section ) {
-			add_settings_section(
-				$id,
-				$section['title'],
-				! empty( $section['description'] )
-					? static function () use ( $section ) {
-						echo '<p class="description">' . esc_html( $section['description'] ) . '</p>';
-					}
-					: '__return_false',
-				$this->page_slug
-			);
-		}
-
-		foreach ( $this->settings_store->get_fields() as $id => $field ) {
-			$args = $field;
-
-			$field_type = $field['type'];
-
-			$inline_types     = [ 'text', 'textarea', 'number', 'email', 'password', 'url', 'select', 'multiselect' ];
-			$acceptence_types = [ 'checkbox', 'toggle' ];
-
-			$inline_field     = in_array( $field_type, $inline_types, true );
-			$acceptence_field = in_array( $field_type, $acceptence_types, true );
-
-			$no_description = empty( $field['extras']['description'] );
-
-			if ( $inline_field || ( $acceptence_field && $no_description ) ) {
-				$args['label_for'] = $id;
-			}
-
-			add_settings_field(
-				$id,
-				$field['title'],
-				[ $this->page_renderer, 'render_field' ],
-				$this->page_slug,
-				$field['section'],
-				$args
-			);
-		}
+	/**
+	 * Set the setting value.
+	 *
+	 * @param string $key   The specific option key (field ID) to set.
+	 * @param mixed  $value The value to set.
+	 *
+	 * @phpstan-param non-empty-string $key
+	 */
+	public function set_setting( string $key, mixed $value ): bool {
+		return $this->persistence->set( $key, $value );
 	}
 }

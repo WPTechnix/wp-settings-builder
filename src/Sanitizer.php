@@ -1,6 +1,6 @@
 <?php
 /**
- * Sanitizes settings before they are saved to the database.
+ * Concrete implementation of Sanitizer_Interface.
  *
  * @package WPTechnix\WP_Settings_Builder
  */
@@ -9,141 +9,155 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder;
 
-use InvalidArgumentException;
 use Throwable;
+use WPTechnix\WP_Settings_Builder\Interfaces\Field_Factory_Interface;
+use WPTechnix\WP_Settings_Builder\Interfaces\Page_Definition_Interface;
+use WPTechnix\WP_Settings_Builder\Interfaces\Sanitizer_Interface;
 
 /**
- * Sanitizes settings before they are saved to the database.
+ * Class Sanitizer
  *
- * This class is state-aware. When sanitizing a form submission (especially
- * from a tabbed interface), it merges the newly submitted values with the
- * existing saved values to prevent data loss from other tabs.
+ * A stateless service responsible for sanitizing raw input data against a page definition.
  *
- * @phpstan-import-type Field_Config from Settings_Store
+ * @phpstan-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
-final class Sanitizer {
+final class Sanitizer implements Sanitizer_Interface {
 
 	/**
-	 * Class Constructor
+	 * Class Constructor.
 	 *
-	 * @param Field_Factory  $field_factory  The factory for creating field objects.
-	 * @param Settings_Store $settings_store The shared settings store object.
+	 * @param Field_Factory_Interface $field_factory The factory service for creating field objects.
 	 */
 	public function __construct(
-		private Field_Factory $field_factory,
-		private Settings_Store $settings_store
+		private Field_Factory_Interface $field_factory
 	) {}
 
 	/**
-	 * Sanitizes the settings array by merging new input with existing options.
-	 *
-	 * This is the main callback for the 'sanitize_callback' argument in
-	 * `register_setting`. It processes the raw input from the $_POST array.
-	 *
-	 * @param mixed $input The raw input from the form submission (from `$_POST`).
-	 *
-	 * @return array The complete, sanitized settings array ready for saving.
-	 *
-	 * @phpstan-return array<string, mixed>
+	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $input ): array {
-		$option_name  = $this->settings_store->get_option_name();
-		$option_group = $this->settings_store->get_option_group_name();
-		$old_options  = get_option( $option_name, [] );
-		$old_options  = is_array( $old_options ) ? $old_options : [];
-
-		if ( ! is_array( $input ) ) {
-			add_settings_error(
-				$option_group,
-				'error_invalid_input',
-				'Invalid input received from submission. Please try again.'
-			);
-			return $old_options;
-		}
-
-		$fields_to_process = $this->get_fields_to_process();
-		$new_values        = [];
+	public function sanitize( array $raw_input, Page_Definition_Interface $definition ): array {
+		$sanitized_values  = [];
+		$fields_to_process = $this->get_fields_to_process( $definition );
+		$option_group      = $definition->get_option_group();
 
 		foreach ( $fields_to_process as $field_id => $field_config ) {
 			try {
-				$raw_value  = $input[ $field_id ] ?? null;
-				$field_type = $field_config['type'];
-
-				if ( 'description' === $field_type ) {
+				if ( 'description' === $field_config['type'] ) {
 					continue;
 				}
 
-				// Handle custom validation first.
+				$raw_value = $raw_input[ $field_id ] ?? null;
+
+				// Handle custom validation callbacks defined in the 'extras' array.
 				$validation_callback = $field_config['extras']['validation_callback'] ?? null;
-				if ( is_callable( $validation_callback ) ) {
-					try {
-						$result = $validation_callback( $raw_value, $field_config );
-						if ( true !== $result ) {
-							$error_message = is_string( $result ) && ! empty( $result )
-								? $result
-								: sprintf( 'Validation failed for the "%s" field.', $field_config['title'] );
-
-							add_settings_error( $option_group, 'error_validation_' . $field_id, $error_message );
-
-							// Revert to the old value and skip to the next field.
-							$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
-							continue;
-						}
-					} catch ( Throwable $e ) {
-						$error_message = sprintf( 'An error occurred during validation for the "%s" field.', $field_config['title'] );
-
-						if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-							$error_message .= " {$e->getMessage()}";
-						}
-
-						add_settings_error( $option_group, 'error_validation_' . $field_id, $error_message );
-
-						$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
-						continue;
-					}
+				if (
+					is_callable( $validation_callback ) &&
+					! $this->run_validation( $validation_callback, $raw_value, $field_config, $option_group )
+				) {
+					// Validation failed; the error is already set. We skip updating this value.
+					continue;
 				}
 
-				// If validation passes, proceed with sanitization.
-				$field_object            = $this->field_factory->create( $field_type, $field_config );
-				$sanitized_value         = $field_object->sanitize( $raw_value );
-				$new_values[ $field_id ] = $sanitized_value;
-			} catch ( InvalidArgumentException $e ) {
-				// This catches errors from the Field_Factory or field constructor.
-				add_settings_error( $option_group, 'error_field_config_' . $field_id, esc_html( $e->getMessage() ) );
-				$new_values[ $field_id ] = $old_options[ $field_id ] ?? null;
+				$field_object                  = $this->field_factory->create( $field_config );
+				$sanitized_values[ $field_id ] = $field_object->sanitize( $raw_value );
+			} catch ( Throwable $e ) {
+				add_settings_error( $option_group, 'field_error_' . $field_id, 'Error processing field "' . $field_config['title'] . '": ' . $e->getMessage() );
 			}
 		}
-
-		return array_merge( $old_options, $new_values );
+		return $sanitized_values;
 	}
 
 	/**
-	 * Determines which fields should be processed in the current request.
+	 * Determines which fields should be processed based on the active tab.
+	 *
+	 * @param Page_Definition_Interface $definition The page definition.
 	 *
 	 * @return array
-	 * @phpstan-return array<non-empty-string, Field_Config>
+	 *
+	 * @phpstan-return Fields_Map
 	 */
-	private function get_fields_to_process(): array {
-		if ( ! $this->settings_store->has_tabs() ) {
-			return $this->settings_store->get_fields();
+	private function get_fields_to_process( Page_Definition_Interface $definition ): array {
+		$tabs = $definition->get_tabs();
+		if ( empty( $tabs ) ) {
+			return $definition->get_fields();
 		}
 
-		$active_tab = $this->settings_store->get_active_tab();
-
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing
+		$active_tab = $this->get_active_tab( $tabs );
 		if ( null === $active_tab ) {
 			return [];
 		}
 
-		$sections_on_tab    = $this->settings_store->get_sections( $active_tab );
+		$sections_on_tab    = array_filter(
+			$definition->get_sections(),
+			static fn( array $section ): bool => $section['tab'] === $active_tab
+		);
 		$section_ids_on_tab = array_keys( $sections_on_tab );
 
-		if ( empty( $section_ids_on_tab ) ) {
-			return [];
-		}
-
 		return array_filter(
-			$this->settings_store->get_fields(),
+			$definition->get_fields(),
 			static fn( array $field ): bool => in_array( $field['section'], $section_ids_on_tab, true )
 		);
+	}
+
+	/**
+	 * Determines the current active tab from the request.
+	 *
+	 * @param array $tabs The map of configured tabs.
+	 *
+	 * @phpstan-param Tabs_Map $tabs
+	 *
+	 * @return string|null The active tab ID, or null if no tabs exist.
+	 *
+	 * @phpstan-return non-empty-string|null
+	 */
+	private function get_active_tab( array $tabs ): ?string {
+		if ( empty( $tabs ) ) {
+			return null;
+		}
+
+        // phpcs:ignore WordPress.Security.NonceVerification
+		$tab_from_request = $_POST['tab'] ?? null;
+
+		$active_tab = is_string( $tab_from_request ) ? sanitize_key( $tab_from_request ) : '';
+		if ( ! empty( $active_tab ) && array_key_exists( $active_tab, $tabs ) ) {
+			return $active_tab;
+		}
+		return array_key_first( $tabs );
+	}
+
+	/**
+	 * Executes a user-provided validation callback and handles errors.
+	 *
+	 * @param callable $callback The validation callback.
+	 * @param mixed    $raw_value The raw input value.
+	 * @param array    $field_config The field's configuration.
+	 * @param string   $option_group The option group name for add_settings_error.
+	 *
+	 * @phpstan-param Field_Config $field_config
+	 * @phpstan-param non-empty-string $option_group
+	 *
+	 * @return bool True if validation passes, false otherwise.
+	 */
+	private function run_validation( callable $callback, mixed $raw_value, array $field_config, string $option_group ): bool {
+		try {
+			$result = $callback( $raw_value, $field_config );
+			if ( true === $result ) {
+				return true;
+			}
+			$error_message = is_string( $result ) && ! empty( $result ) ? $result : sprintf( 'Validation failed for the "%s" field.', $field_config['title'] );
+
+			add_settings_error( $option_group, 'validation_error_' . $field_config['id'], $error_message );
+			return false;
+		} catch ( Throwable $e ) {
+			$error_message = sprintf( 'An error occurred during validation for the "%s" field.', $field_config['title'] );
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				$error_message .= ' ' . $e->getMessage();
+			}
+			add_settings_error( $option_group, 'validation_exception_' . $field_config['id'], $error_message );
+			return false;
+		}
 	}
 }

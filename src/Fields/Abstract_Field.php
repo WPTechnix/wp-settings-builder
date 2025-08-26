@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
 use WPTechnix\WP_Settings_Builder\Interfaces\Field_Interface;
+use InvalidArgumentException;
 
 /**
  * Abstract field class to provide basic structure and common functionality.
@@ -26,24 +27,109 @@ use WPTechnix\WP_Settings_Builder\Interfaces\Field_Interface;
 abstract class Abstract_Field implements Field_Interface {
 
 	/**
+	 * Field type.
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type;
+
+	/**
 	 * Class Constructor.
 	 *
 	 * @param array $field_config  The field's config uration properties.
 	 *
 	 * @phpstan-param Field_Config $field_config
 	 */
-	public function __construct(
+	final public function __construct(
 		protected array $field_config,
 	) {
 	}
 
 	/**
-	 * Get the default value for the field.
-	 *
-	 * @return mixed The default value.
+	 * {@inheritDoc}
+	 */
+	public static function get_type(): string {
+		return static::$type;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_id(): string {
+		return $this->field_config['id'];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_name(): string {
+		return $this->field_config['name'];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_title(): string {
+		return $this->field_config['title'];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_section(): string {
+		return $this->field_config['section'];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_extra( string $key, mixed $default_value = null ): mixed {
+		return $this->field_config['extras'][ $key ] ?? $default_value;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_html_prefix(): string {
+		return $this->get_extra( 'html_prefix', 'wptx' );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_description(): string {
+		$description = $this->get_extra( 'description', '' );
+		return is_string( $description ) ? $description : '';
+	}
+
+	/**
+	 * {@inheritDoc}
 	 */
 	public function get_default_value(): mixed {
-		return $this->field_config['extras']['default'] ?? null;
+		return $this->get_extra( 'default', null );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_value(): mixed {
+		return $this->get_extra( 'value', $this->get_default_value() );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function should_use_inline_title_as_label(): bool {
+		return false;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function should_render_description_below(): bool {
+		return ! empty( $this->get_description() );
 	}
 
 	/**
@@ -53,9 +139,12 @@ abstract class Abstract_Field implements Field_Interface {
 	 * associative array, with proper escaping.
 	 *
 	 * @param array $attributes The array of attributes (key => value).
+	 *
 	 * @phpstan-param array<non-empty-string, scalar> $attributes
 	 *
 	 * @return string The generated HTML attributes string.
+	 *
+	 * @throws InvalidArgumentException When an attribute value is not a string, numeric or a boolean.
 	 */
 	protected function build_attributes_string( array $attributes ): string {
 		$attr_parts = [];
@@ -64,11 +153,43 @@ abstract class Abstract_Field implements Field_Interface {
 				if ( $value ) {
 					$attr_parts[] = esc_attr( $key );
 				}
+			} elseif ( is_scalar( $value ) ) {
+				$value        = (string) $value;
+				$attr_parts[] = sprintf( '%s="%s"', esc_attr( $key ), esc_attr( $value ) );
 			} else {
-				$attr_parts[] = sprintf( '%s="%s"', esc_attr( $key ), esc_attr( (string) $value ) );
+				throw new InvalidArgumentException(
+					"HTML attribute '$key' must be a string, numeric or a boolean value."
+				);
 			}
 		}
 
 		return implode( ' ', $attr_parts );
+	}
+
+	/**
+	 * Get field extra HTML attributes.
+	 *
+	 * @return array
+	 *
+	 * @phpstan-return array<non-empty-string, scalar>
+	 */
+	protected function get_extra_html_attributes(): array {
+		$field_attributes = $this->get_extra( 'html_attributes', [] );
+		return is_array( $field_attributes ) ? $field_attributes : [];
+	}
+
+	/**
+	 * Get field extra HTML attributes as string.
+	 *
+	 * @param array $default_attributes Additional attributes.
+	 *
+	 * @phpstan-param array<non-empty-string, scalar> $default_attributes
+	 *
+	 * @return string
+	 */
+	protected function get_extra_html_attributes_string( array $default_attributes = [] ): string {
+		return $this->build_attributes_string(
+			array_merge( $default_attributes, $this->get_extra_html_attributes() )
+		);
 	}
 }

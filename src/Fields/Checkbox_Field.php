@@ -9,32 +9,46 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
+use InvalidArgumentException;
+
 /**
  * Checkbox Field Class
  */
-final class Checkbox_Field extends Abstract_Field {
+class Checkbox_Field extends Abstract_Field {
+
+	/**
+	 * Field Type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'checkbox';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
-		$description = $this->field_config['extras']['description'] ?? null;
+	public function render(): void {
+
+		$description = $this->get_description();
+
+		$value = $this->get_value();
 
 		// First, build the core <input> element HTML. This is used in both cases.
 		$input_html = sprintf(
 			'<input type="checkbox" id="%s" name="%s" value="1" %s %s />',
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
+			esc_attr( $this->get_id() ),
+			esc_attr( $this->get_name() ),
 			checked( true, $value, false ),
-			$this->build_attributes_string( $attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
+			$this->get_extra_html_attributes_string() // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 
-		if ( is_string( $description ) && ! empty( $description ) ) {
+		if ( ! empty( $description ) ) {
 			// If a description exists, wrap the input and the description in a <label>.
 			// This makes the description text itself clickable, improving UX.
 			printf(
 				'<label for="%s">%s %s</label>',
-				esc_attr( $this->field_config['id'] ),
+				esc_attr( $this->get_id() ),
 				$input_html, // phpcs:ignore WordPress.Security.EscapeOutput
 				wp_kses_post( $description ) // Sanitize the description, allowing safe HTML.
 			);
@@ -48,8 +62,25 @@ final class Checkbox_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_default_value(): bool {
+	public function get_value(): mixed {
+		$value = parent::get_value();
+		if ( null === $value ) {
+			return null;
+		}
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		return is_scalar( $value ) && '1' === (string) $value;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_default_value(): mixed {
 		$default_value = parent::get_default_value();
+		if ( null === $default_value ) {
+			return null;
+		}
 		if ( is_bool( $default_value ) ) {
 			return $default_value;
 		}
@@ -60,7 +91,10 @@ final class Checkbox_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): bool {
+	public function sanitize( mixed $value ): mixed {
+		if ( null === $value ) {
+			return null;
+		}
 		if ( is_bool( $value ) ) {
 			return $value;
 		}
@@ -68,6 +102,22 @@ final class Checkbox_Field extends Abstract_Field {
 			return '1' === (string) $value;
 		}
 
+		return false;
+	}
+
+	/**
+	 * Should use inline title as the field label?
+	 *
+	 * @return bool
+	 */
+	public function should_use_inline_title_as_label(): bool {
+		return empty( $this->get_description() );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function should_render_description_below(): bool {
 		return false;
 	}
 }

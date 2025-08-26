@@ -14,14 +14,26 @@ namespace WPTechnix\WP_Settings_Builder\Fields;
  *
  * Renders a checkbox styled as a toggle switch.
  */
-final class Toggle_Field extends Abstract_Field {
+final class Toggle_Field extends Checkbox_Field {
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'toggle';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
-		$description = $this->field_config['extras']['description'] ?? null;
-		$html_prefix = $this->field_config['extras']['html_prefix'];
+	public function render(): void {
+		$description = $this->get_description();
+
+		$html_prefix = $this->get_html_prefix();
+
+		$value = $this->get_value();
 
 		// Build the core toggle switch HTML structure.
 		$toggle_html = sprintf(
@@ -30,19 +42,19 @@ final class Toggle_Field extends Abstract_Field {
 				<span class="%s-toggle-slider"></span>
 			</span>',
 			esc_attr( $html_prefix ),
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
+			esc_attr( $this->get_id() ),
+			esc_attr( $this->get_name() ),
 			checked( true, $value, false ),
-			$this->build_attributes_string( $attributes ), // phpcs:ignore WordPress.Security.EscapeOutput
+			$this->get_extra_html_attributes_string(), // phpcs:ignore WordPress.Security.EscapeOutput
 			esc_attr( $html_prefix )
 		);
 
-		if ( is_string( $description ) && ! empty( $description ) ) {
+		if ( ! empty( $description ) ) {
 			// If a description exists, wrap the toggle and the description in a <label>.
 			// This makes the description text itself clickable.
 			printf(
 				'<label for="%s">%s %s</label>',
-				esc_attr( $this->field_config['id'] ),
+				esc_attr( $this->get_id() ),
 				$toggle_html, // phpcs:ignore WordPress.Security.EscapeOutput
 				wp_kses_post( $description )
 			);
@@ -51,31 +63,5 @@ final class Toggle_Field extends Abstract_Field {
 			// The main field title in the <th> will act as the label.
 			echo $toggle_html; // phpcs:ignore WordPress.Security.EscapeOutput
 		}
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): bool {
-		$default_value = parent::get_default_value();
-		if ( is_bool( $default_value ) ) {
-			return $default_value;
-		}
-		return is_scalar( $default_value ) && '1' === (string) $default_value;
-	}
-
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function sanitize( mixed $value ): bool {
-		if ( is_bool( $value ) ) {
-			return $value;
-		}
-		if ( is_scalar( $value ) ) {
-			return '1' === (string) $value;
-		}
-
-		return false;
 	}
 }

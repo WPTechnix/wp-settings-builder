@@ -12,35 +12,34 @@ namespace WPTechnix\WP_Settings_Builder\Fields;
 /**
  * Textarea Field Class
  */
-final class Textarea_Field extends Abstract_Field {
+class Textarea_Field extends Text_Field {
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'textarea';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
+	public function render(): void {
 		$default_attributes = [
 			'rows'  => 5,
 			'cols'  => 50,
 			'class' => 'large-text',
 		];
 
-		$merged_attributes = array_merge( $default_attributes, $attributes );
-
 		printf(
 			'<textarea id="%s" name="%s" %s>%s</textarea>',
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
-			$this->build_attributes_string( $merged_attributes ), // phpcs:ignore WordPress.Security.EscapeOutput
-			esc_textarea( is_scalar( $value ) ? (string) $value : '' )
+			esc_attr( $this->get_id() ),
+			esc_attr( $this->get_name() ),
+			$this->get_extra_html_attributes_string( $default_attributes ), // phpcs:ignore WordPress.Security.EscapeOutput
+			esc_textarea( (string) $this->get_value() )
 		);
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): ?string {
-		$default_value = parent::get_default_value();
-		return is_scalar( $default_value ) ? (string) $default_value : null;
 	}
 
 	/**
@@ -51,8 +50,6 @@ final class Textarea_Field extends Abstract_Field {
 		$default_value     = $this->get_default_value();
 		$sanitized_default = is_string( $default_value ) ? sanitize_textarea_field( $default_value ) : null;
 
-		return is_scalar( $value ) ?
-			sanitize_textarea_field( (string) $value ) :
-			$sanitized_default;
+		return is_scalar( $value ) ? sanitize_textarea_field( (string) $value ) : $sanitized_default;
 	}
 }
