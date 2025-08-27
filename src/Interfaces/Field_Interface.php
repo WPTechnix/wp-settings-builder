@@ -11,6 +11,8 @@ namespace WPTechnix\WP_Settings_Builder\Interfaces;
 
 /**
  * Interface Field_Interface
+ *
+ * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 interface Field_Interface {
 
@@ -130,4 +132,27 @@ interface Field_Interface {
 	 * @throws \InvalidArgumentException When invalid HTML attributes provided.
 	 */
 	public function render(): void;
+
+	/**
+	 * Get the CSS contents.
+	 *
+	 * @return string
+	 */
+	public static function get_css_contents(): string;
+
+	/**
+	 * Get the JS contents.
+	 *
+	 * @return string
+	 */
+	public static function get_js_contents(): string;
+
+	/**
+	 * Get the asset definitions for this field.
+	 *
+	 * @return array
+	 *
+	 * @phpstan-return array<non-empty-string, Asset>
+	 */
+	public static function get_asset_definitions(): array;
 }

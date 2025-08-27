@@ -23,10 +23,13 @@ use WPTechnix\WP_Settings_Builder\Interfaces\Persistence_Interface;
  * for developers to define the structure of a settings page. Its `init()` method
  * acts as the Composition Root, assembling all necessary services and activating the page.
  *
+ * @phpstan-import-type Script_Extra from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Style_Extra from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Sections_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Field_Extras from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 final class Settings {
 
@@ -92,6 +95,16 @@ final class Settings {
 	 * @phpstan-var Fields_Map
 	 */
 	private array $fields = [];
+
+	/**
+	 * Asset Registry.
+	 *
+	 * @var array
+	 *
+	 * @phpstan-var array<non-empty-string, Asset>
+	 */
+	private array $asset_registry = [];
+
 
 	/**
 	 * The internal factory for creating field objects.
@@ -311,6 +324,48 @@ final class Settings {
 	}
 
 	/**
+	 * Register and enqueue scripts and styles.
+	 *
+	 * @param string       $handle   The unique handle for the asset.
+	 * @param string       $type     The type of asset: 'css' or 'js'.
+	 * @param string       $src      The path of the asset.
+	 * @param string[]     $deps     An array of dependencies.
+	 * @param string|false $version  Version (Optional).
+	 * @param mixed        $extra    Extra data (Optional).
+	 *
+	 * @phpstan-param non-empty-string $handle
+	 * @phpstan-param 'css'|'js' $type
+	 * @phpstan-param non-empty-string $src
+	 * @phpstan-param list<non-empty-string> $deps
+	 * @phpstan-param non-empty-string|false $version
+	 * @phpstan-param ( $type is 'css' ? null|Style_Extra : null|Script_Extra ) $extra
+	 *
+	 * @return self
+	 */
+	public function register_asset(
+		string $handle,
+		string $type,
+		string $src,
+		array $deps = [],
+		string|false $version = false,
+		mixed $extra = null
+	): self {
+		$this->asset_registry[ $handle ] = [
+			'handle'       => $handle,
+			'type'         => $type,
+			'src'          => $src,
+			'dependencies' => $deps,
+			'version'      => $version,
+		];
+
+		if ( null !== $extra ) {
+			$this->asset_registry[ $handle ]['extra'] = $extra;
+		}
+
+		return $this;
+	}
+
+	/**
 	 * Registers a custom field class with the framework.
 	 *
 	 * This method allows developers to add their own custom field types. The provided
@@ -324,6 +379,18 @@ final class Settings {
 	 */
 	public function register_field_class( string $field_class ): self {
 		$this->field_factory->register( $field_class );
+
+		// 2. Discover the default assets from the class itself.
+		$default_assets = $field_class::get_asset_definitions();
+
+		// 3. Add them to our registry ONLY if they haven't been manually registered already.
+		foreach ( $default_assets as $handle => $config ) {
+			if ( ! isset( $this->asset_registry[ $handle ] ) ) {
+				// The handle doesn't exist, so we accept the default.
+				$this->asset_registry[ $handle ] = $config;
+			}
+		}
+
 		return $this;
 	}
 
@@ -349,7 +416,7 @@ final class Settings {
 			$this->fields
 		);
 
-		$asset_manager = new Asset_Manager();
+		$asset_manager = new Asset_Manager( $this->field_factory, $this->asset_registry );
 
 		$hooks_registrar = new Hooks_Registrar(
 			$definition,

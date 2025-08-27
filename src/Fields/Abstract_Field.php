@@ -133,6 +133,27 @@ abstract class Abstract_Field implements Field_Interface {
 	}
 
 	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_asset_definitions(): array {
+		return [];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_css_contents(): string {
+		return '';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_js_contents(): string {
+		return '';
+	}
+
+	/**
 	 * Build an HTML attributes string from an array.
 	 *
 	 * This helper method constructs a valid HTML attribute string from an
