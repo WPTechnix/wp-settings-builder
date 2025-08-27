@@ -31,22 +31,18 @@ final class Toggle_Field extends Checkbox_Field {
 	public function render(): void {
 		$description = $this->get_description();
 
-		$html_prefix = $this->get_html_prefix();
-
 		$value = $this->get_value();
 
 		// Build the core toggle switch HTML structure.
 		$toggle_html = sprintf(
-			'<span class="%s-toggle">
+			'<span class="wptx-toggle">
 				<input type="checkbox" id="%s" name="%s" value="1" %s %s />
-				<span class="%s-toggle-slider"></span>
+				<span class="wptx-toggle-slider"></span>
 			</span>',
-			esc_attr( $html_prefix ),
 			esc_attr( $this->get_id() ),
 			esc_attr( $this->get_name() ),
 			checked( true, $value, false ),
 			$this->get_extra_html_attributes_string(), // phpcs:ignore WordPress.Security.EscapeOutput
-			esc_attr( $html_prefix )
 		);
 
 		if ( ! empty( $description ) ) {

@@ -79,7 +79,7 @@ final class Html_Renderer implements Renderer_Interface {
 		$active_tab = $this->get_active_tab( $tabs );
 
 		?>
-		<nav class="nav-tab-wrapper wp-clearfix" aria-label="<?php esc_attr_e( 'Secondary navigation', 'wp-settings-builder' ); ?>">
+		<nav class="nav-tab-wrapper wp-clearfix" aria-label="Secondary navigation">
 			<?php
 			foreach ( $tabs as $tab_id => $tab_config ) {
 				$url   = add_query_arg(

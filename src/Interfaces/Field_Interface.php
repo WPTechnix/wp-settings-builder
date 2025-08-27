@@ -74,15 +74,6 @@ interface Field_Interface {
 	public function get_extra( string $key, mixed $default_value = null ): mixed;
 
 	/**
-	 * Get HTML prefix.
-	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
-	 */
-	public function get_html_prefix(): string;
-
-	/**
 	 * Get field description
 	 *
 	 * @return string

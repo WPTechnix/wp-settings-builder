@@ -35,8 +35,7 @@ class Choice_Field extends Abstract_Field {
 	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
 	public function render(): void {
-		$options     = $this->get_options();
-		$html_prefix = $this->get_html_prefix();
+		$options = $this->get_options();
 
 		$fields_html = [];
 
@@ -48,12 +47,11 @@ class Choice_Field extends Abstract_Field {
 
 			$fields_html[] = sprintf(
 				// Wrap each radio button in its own label for better accessibility and layout control.
-				'<label for="%s" class="%s-radio-label">
+				'<label for="%s" class="wptx-radio-label">
 					<input type="radio" id="%s" name="%s" value="%s" %s %s />
 					%s
 				</label>',
 				esc_attr( $radio_id ),
-				esc_attr( $html_prefix ),
 				esc_attr( $radio_id ),
 				esc_attr( $this->get_name() ),
 				esc_attr( (string) $option_value ),

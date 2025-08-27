@@ -30,7 +30,6 @@ final class Multiselect_Field extends Multicheck_Field {
 	 */
 	public function render(): void {
 		$options          = $this->get_options();
-		$html_prefix      = $this->get_html_prefix();
 		$current_values   = $this->get_value();
 		$field_name_array = $this->get_name() . '[]'; // Append [] for array submission.
 
@@ -47,7 +46,7 @@ final class Multiselect_Field extends Multicheck_Field {
 
 		$default_attributes = [
 			'multiple' => 'multiple',
-			'class'    => "{$html_prefix}-select2-field",
+			'class'    => 'wptx-select2-field',
 		];
 
 		printf(

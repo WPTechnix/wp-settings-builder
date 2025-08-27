@@ -92,13 +92,6 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_html_prefix(): string {
-		return $this->get_extra( 'html_prefix', 'wptx' );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function get_description(): string {
 		$description = $this->get_extra( 'description', '' );
 		return is_string( $description ) ? $description : '';
