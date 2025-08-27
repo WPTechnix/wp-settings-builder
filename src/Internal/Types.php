@@ -49,8 +49,8 @@ namespace WPTechnix\WP_Settings_Builder\Internal;
  *   handle: non-empty-string,
  *   type: 'css'|'js',
  *   src: non-empty-string,
- *   dependencies: non-empty-string[],
- *   version: false|non-empty-string,
+ *   version?: false|non-empty-string,
+ *   dependencies?: non-empty-string[],
  *   extra?: Script_Extra|Style_Extra
  * }
  *

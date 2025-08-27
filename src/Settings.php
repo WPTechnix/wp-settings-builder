@@ -384,10 +384,10 @@ final class Settings {
 		$default_assets = $field_class::get_asset_definitions();
 
 		// 3. Add them to our registry ONLY if they haven't been manually registered already.
-		foreach ( $default_assets as $handle => $config ) {
-			if ( ! isset( $this->asset_registry[ $handle ] ) ) {
+		foreach ( $default_assets as $key => $config ) {
+			if ( ! isset( $this->asset_registry[ $key ] ) ) {
 				// The handle doesn't exist, so we accept the default.
-				$this->asset_registry[ $handle ] = $config;
+				$this->asset_registry[ $key ] = $config;
 			}
 		}
 

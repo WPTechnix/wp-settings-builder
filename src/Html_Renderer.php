@@ -46,7 +46,7 @@ final class Html_Renderer implements Renderer_Interface {
 			$this->render_tabs( $definition );
 			?>
 
-			<form method="post" action="options.php">
+			<form method="post" action="options.php" class="wptx-settings-form">
 				<?php
 
 				settings_fields( $definition->get_option_group() );

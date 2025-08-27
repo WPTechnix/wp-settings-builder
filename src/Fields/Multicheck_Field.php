@@ -129,4 +129,19 @@ class Multicheck_Field extends Abstract_Field {
 		// Re-index the array and ensure all values are strings for consistent storage.
 		return array_values( array_map( 'strval', $sanitized_values ) );
 	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_css_contents(): string {
+		return <<<'CSS'
+.wptx-multicheck-label {
+	display: block;
+	margin-bottom: 10px;
+}
+.wptx-multicheck-label:not(:has(:disabled)):not(:has(:read-only)) {
+	cursor: pointer;
+}
+CSS;
+	}
 }

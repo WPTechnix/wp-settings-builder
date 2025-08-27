@@ -93,4 +93,19 @@ class Choice_Field extends Abstract_Field {
 	public function sanitize( mixed $value ): ?string {
 		return $this->is_valid_choice( $value ) ? (string) $value : $this->get_default_value();
 	}
+
+		/**
+		 * {@inheritDoc}
+		 */
+	public static function get_css_contents(): string {
+		return <<<'CSS'
+.wptx-radio-label {
+	display: block;
+	margin-bottom: 10px;
+}
+.wptx-radio-label:not(:has(:disabled)):not(:has(:read-only)) {
+	cursor: pointer;
+}
+CSS;
+	}
 }

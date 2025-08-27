@@ -51,6 +51,7 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	 * The final, merged registry of all known asset definitions.
 	 *
 	 * @var array
+	 *
 	 * @phpstan-var array<non-empty-string, Asset>
 	 */
 	private array $final_asset_registry = [];
@@ -73,7 +74,7 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	 */
 	public function enqueue( Page_Definition_Interface $definition ): void {
 		if ( ! $this->assets_registered ) {
-			$this->build_and_register_final_registry();
+			$this->register_all_assets();
 			$this->assets_registered = true;
 		}
 
@@ -85,20 +86,20 @@ final class Asset_Manager implements Asset_Manager_Interface {
 
 		/** @phpstan-var list<non-empty-string> $active_field_types */
 
-		$this->enqueue_page_assets( $active_field_types );
+		$this->collect_and_enqueue_assets( $active_field_types );
 	}
 
 	/**
-	 * Enqueues all necessary assets for the current settings page.
+	 * Collects all required assets for the active field types and enqueues them.
 	 *
 	 * @param array $active_field_types A list of unique field types active on the page.
 	 *
 	 * @phpstan-param list<non-empty-string> $active_field_types
 	 */
-	private function enqueue_page_assets( array $active_field_types ): void {
+	private function collect_and_enqueue_assets( array $active_field_types ): void {
 		$script_handles = [];
 		$style_handles  = [];
-		$inline_css     = $this->get_default_inline_css();
+		$inline_css     = $this->get_default_inline_css() . "\n";
 		$inline_js      = $this->get_default_inline_js();
 
 		foreach ( $this->get_active_field_classes( $active_field_types ) as $class_name ) {
@@ -117,19 +118,15 @@ final class Asset_Manager implements Asset_Manager_Interface {
 				}
 			}
 
-			$inline_css .= $class_name::get_css_contents();
-			$inline_js  .= $class_name::get_js_contents();
+			$inline_css .= $class_name::get_css_contents() . "\n";
+			$inline_js  .= $class_name::get_js_contents() . "\n";
 		}
 
-		if ( empty( $script_handles ) && empty( $style_handles ) && empty( $inline_css ) && empty( $inline_js ) ) {
-			return;
-		}
-
-		$this->enqueue_assets( $script_handles, $style_handles, $inline_js, $inline_css );
+		$this->dispatch_enqueue_calls( $script_handles, $style_handles, $inline_js, $inline_css );
 	}
 
 	/**
-	 * Handles the actual enqueuing of scripts and styles.
+	 * Dispatches the collected assets to the WordPress enqueueing functions.
 	 *
 	 * @param array  $script_handles The script handles to enqueue.
 	 * @param array  $style_handles The style handles to enqueue.
@@ -139,7 +136,7 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	 * @phpstan-param list<non-empty-string> $script_handles
 	 * @phpstan-param list<non-empty-string> $style_handles
 	 */
-	private function enqueue_assets( array $script_handles, array $style_handles, string $inline_js, string $inline_css ): void {
+	private function dispatch_enqueue_calls( array $script_handles, array $style_handles, string $inline_js, string $inline_css ): void {
 		wp_enqueue_script( self::MAIN_JS_HANDLE );
 		if ( ! empty( $inline_js ) ) {
 			wp_add_inline_script( self::MAIN_JS_HANDLE, $inline_js, 'after' );
@@ -160,9 +157,10 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	}
 
 	/**
-	 * Builds the final asset registry and registers everything with WordPress.
+	 * Builds the final asset registry from defaults and overrides, then registers
+	 * everything with WordPress.
 	 */
-	private function build_and_register_final_registry(): void {
+	private function register_all_assets(): void {
 		$default_assets             = $this->get_all_default_field_assets();
 		$this->final_asset_registry = array_merge( $default_assets, $this->registered_assets );
 
@@ -189,7 +187,7 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	private function register_script( string $handle, array $config ): void {
 		$extra = $config['extra'] ?? true;
 		/** @phpstan-var Script_Extra $extra */
-		wp_register_script( $handle, $config['src'], $config['deps'] ?? [], $config['ver'] ?? null, $extra );
+		wp_register_script( $handle, $config['src'], $config['dependencies'] ?? [], $config['version'] ?? null, $extra );
 	}
 
 	/**
@@ -204,7 +202,7 @@ final class Asset_Manager implements Asset_Manager_Interface {
 	private function register_style( string $handle, array $config ): void {
 		$extra = $config['extra'] ?? 'all';
 		/** @phpstan-var Style_Extra $extra */
-		wp_register_style( $handle, $config['src'], $config['deps'] ?? [], $config['ver'] ?? null, $extra );
+		wp_register_style( $handle, $config['src'], $config['dependencies'] ?? [], $config['version'] ?? null, $extra );
 	}
 
 	/**
@@ -278,12 +276,81 @@ final class Asset_Manager implements Asset_Manager_Interface {
 		return '';
 	}
 
-	/**
-	 * Returns the default inline CSS.
-	 *
-	 * @return string
-	 */
+
+		/**
+		 * Returns the default inline CSS with color variables for admin schemes.
+		 *
+		 * @return string
+		 */
 	private function get_default_inline_css(): string {
-		return '';
+		return <<<'CSS'
+/*
+ * Defines base variables and overrides them for each official WordPress
+ * admin color scheme to ensure UI components match the user's preference.
+ *
+ * --wptx-primary: The main brand/solid color for elements.
+ * --wptx-accent: A brighter color for focus rings, highlights, and hovers.
+ */
+body.wp-admin {
+    --wptx-border-color: #8c8f94;
+
+    /* Fallback and default "Fresh" scheme colors */
+    --wptx-primary: #0073aa;
+    --wptx-accent: #007cba;
+}
+
+/* Overrides for specific admin color schemes */
+body.admin-color-light {
+    --wptx-primary: #006699;
+    --wptx-accent: #008ec2;
+}
+body.admin-color-modern {
+    --wptx-primary: #3858e9;
+    --wptx-accent: #3858e9; /* This scheme's primary is already bright */
+}
+body.admin-color-blue {
+    --wptx-primary: #096484;
+    --wptx-accent: #0a7e9e;
+}
+body.admin-color-coffee {
+    --wptx-primary: #59524c;
+    --wptx-accent: #c7a589;
+}
+body.admin-color-ectoplasm {
+    --wptx-primary: #523f6d;
+    --wptx-accent: #a3b745;
+}
+body.admin-color-midnight {
+    --wptx-primary: #e14d43;
+    --wptx-accent: #dd3629;
+}
+body.admin-color-ocean {
+    --wptx-primary: #738e96;
+    --wptx-accent: #9ebaa0;
+}
+body.admin-color-sunrise {
+    --wptx-primary: #dd823b;
+    --wptx-accent: #d54e21;
+}
+
+.wptx-settings-form {
+	max-width: 970px;
+}
+
+/* Helper styles for tab navigation */
+.nav-tab-wrapper .nav-tab {
+    display: flex;
+    align-items: center;
+}
+
+.nav-tab-wrapper .dashicons {
+    opacity: 0.85;
+    font-size: 1.125em;
+    height: 1.125em;
+    width: 1.125em;
+    margin-right: 0.5em;
+    margin-bottom: -0.175em;
+}
+CSS;
 	}
 }
