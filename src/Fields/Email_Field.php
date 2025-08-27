@@ -12,33 +12,22 @@ namespace WPTechnix\WP_Settings_Builder\Fields;
 /**
  * Email Field Class
  */
-final class Email_Field extends Abstract_Field {
+class Email_Field extends Text_Field {
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'email';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
-		$default_attributes = [ 'class' => 'regular-text' ];
-
-		$merged_attributes = array_merge( $default_attributes, $attributes );
-
-		printf(
-			'<input type="email" id="%s" name="%s" value="%s" %s />',
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
-			esc_attr( is_scalar( $value ) ? (string) $value : '' ),
-			$this->build_attributes_string( $merged_attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
-		);
-	}
-
-	/**
-	 * Get the default value for the field.
-	 *
-	 * @return string|null
-	 */
-	public function get_default_value(): ?string {
-		$default_value = parent::get_default_value();
-		return is_string( $default_value ) ? $default_value : null;
+	public function render(): void {
+		$this->render_field( 'email' );
 	}
 
 	/**

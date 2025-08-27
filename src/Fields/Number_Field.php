@@ -10,38 +10,66 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
 /**
- * Handles rendering and sanitization for number fields.
+ * Number Field Class
  */
-final class Number_Field extends Abstract_Field {
+class Number_Field extends Text_Field {
+
+	/**
+	 * Regex Pattern for safe numeric strings
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	public const REGEX_PATTERN = '/^-?\d+(\.\d+)?$/';
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'number';
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function render( mixed $value, array $attributes ): void {
-		$default_attributes = [ 'class' => 'regular-text' ];
-		$merged_attributes  = array_merge( $default_attributes, $attributes );
-
-		printf(
-			'<input type="number" id="%s" name="%s" value="%s" %s />',
-			esc_attr( $this->field_config['id'] ),
-			esc_attr( $this->field_config['name'] ),
-			esc_attr( is_numeric( $value ) ? (string) $value : '' ),
-			$this->build_attributes_string( $merged_attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
-		);
+	public function render(): void {
+		$this->render_field( 'number' );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_default_value(): ?float {
+	public function get_value(): ?string {
+		$value = parent::get_value();
+		if ( is_numeric( $value ) && ! empty( preg_match( self::REGEX_PATTERN, $value ) ) ) {
+			return $value;
+		}
+		return null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public function get_default_value(): ?string {
 		$default_value = parent::get_default_value();
-		return is_numeric( $default_value ) ? (float) $default_value : null;
+		// Stricter check for integer or float-like strings.
+		if ( is_numeric( $default_value ) && ! empty( preg_match( self::REGEX_PATTERN, $default_value ) ) ) {
+			return $default_value;
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
-	public function sanitize( mixed $value ): ?float {
-		return is_numeric( $value ) ? (float) $value : $this->get_default_value();
+	public function sanitize( mixed $value ): ?string {
+		// Stricter check for integer or float-like strings.
+		if ( is_numeric( $value ) && ! empty( preg_match( self::REGEX_PATTERN, (string) $value ) ) ) {
+			return (string) $value;
+		}
+		return $this->get_default_value();
 	}
 }

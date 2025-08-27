@@ -15,6 +15,8 @@ use InvalidArgumentException;
 /**
  * Provides common functionality for fields that have a list of options,
  * like 'select' and 'radio'.
+ *
+ * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Abstract_Field
  */
 trait Has_Choices_Trait {
 
@@ -23,18 +25,18 @@ trait Has_Choices_Trait {
 	 *
 	 * @return array
 	 *
-	 * @phpstan-return array<string|int, string|int>
+	 * @phpstan-return array<string|int, mixed>
 	 *
 	 * @throws InvalidArgumentException If options are not a valid array.
 	 */
-	private function get_options(): array {
-		$options = $this->field_config['extras']['options'] ?? null;
+	protected function get_options(): array {
+		$options = $this->get_extra( 'options', [] );
 
 		if ( ! is_array( $options ) ) {
 			throw new InvalidArgumentException(
 				sprintf(
 					'The "options" extra must be provided as an array for the "%s" field.',
-					$this->field_config['id']
+					$this->get_id()
 				)
 			);
 		}
@@ -48,7 +50,7 @@ trait Has_Choices_Trait {
 	 *
 	 * @return bool
 	 */
-	private function is_valid_choice( mixed $value ): bool {
+	protected function is_valid_choice( mixed $value ): bool {
 		if ( ! is_scalar( $value ) ) {
 			return false;
 		}

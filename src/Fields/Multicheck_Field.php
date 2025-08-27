@@ -14,30 +14,36 @@ use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Choices_Trait;
 /**
  * Multicheck Field Class
  */
-final class Multicheck_Field extends Abstract_Field {
+class Multicheck_Field extends Abstract_Field {
 
 	use Has_Choices_Trait;
+
+	/**
+	 * Field type
+	 *
+	 * @var string
+	 *
+	 * @phpstan-var non-empty-string
+	 */
+	protected static string $type = 'multicheck';
 
 	/**
 	 * {@inheritDoc}
 	 *
 	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
-	public function render( mixed $value, array $attributes ): void {
+	public function render(): void {
 		$options        = $this->get_options();
-		$html_prefix    = $this->field_config['extras']['html_prefix'];
-		$current_values = is_array( $value ) ? $value : [];
-		$field_name     = $this->field_config['name'] . '[]'; // Append [] for array submission.
-
-		// Prepare the array of string values once, before the loop, for efficiency.
-		$string_current_values = array_map( 'strval', $current_values );
+		$html_prefix    = $this->get_html_prefix();
+		$current_values = $this->get_value();
+		$field_name     = $this->get_name() . '[]'; // Append [] for array submission.
 
 		$fields_html = [];
 
 		foreach ( $options as $option_value => $option_label ) {
 			// Create a unique ID for each checkbox for the label's 'for' attribute.
-			$checkbox_id = $this->field_config['id'] . '_' . sanitize_key( (string) $option_value );
-			$is_checked  = in_array( (string) $option_value, $string_current_values, true );
+			$checkbox_id = $this->get_id() . '_' . sanitize_key( (string) $option_value );
+			$is_checked  = in_array( (string) $option_value, $current_values, true );
 
 			$fields_html[] = sprintf(
 				// Wrap each checkbox in its own label for accessibility and layout control.
@@ -52,13 +58,32 @@ final class Multicheck_Field extends Abstract_Field {
 				esc_attr( $field_name ),
 				esc_attr( (string) $option_value ),
 				checked( true, $is_checked, false ),
-				$this->build_attributes_string( $attributes ), // phpcs:ignore WordPress.Security.EscapeOutput
+				$this->get_extra_html_attributes_string(), // phpcs:ignore WordPress.Security.EscapeOutput
 				esc_html( (string) $option_label )
 			);
 		}
 
 		// Output the checkboxes, separated by a newline for cleaner HTML source.
 		echo implode( "\n", $fields_html ); // phpcs:ignore WordPress.Security.EscapeOutput
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return array
+	 *
+	 * @phpstan-return array<int, string>
+	 */
+	public function get_value(): array {
+		$value = parent::get_value();
+		if ( ! is_array( $value ) ) {
+			$value = $this->get_default_value();
+		}
+
+		return array_filter(
+			$value,
+			fn( $val ) => $this->is_valid_choice( $val )
+		);
 	}
 
 	/**
@@ -94,8 +119,6 @@ final class Multicheck_Field extends Abstract_Field {
 	 */
 	public function sanitize( mixed $value ): array {
 		if ( ! is_array( $value ) ) {
-			// If no checkboxes are checked, the key won't be in $_POST.
-			// The sanitizer will pass `null`, so we must return an empty array.
 			return [];
 		}
 
