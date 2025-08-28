@@ -92,13 +92,6 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
-	public function get_html_prefix(): string {
-		return $this->get_extra( 'html_prefix', 'wptx' );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
 	public function get_description(): string {
 		$description = $this->get_extra( 'description', '' );
 		return is_string( $description ) ? $description : '';
@@ -130,6 +123,27 @@ abstract class Abstract_Field implements Field_Interface {
 	 */
 	public function should_render_description_below(): bool {
 		return ! empty( $this->get_description() );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_asset_definitions(): array {
+		return [];
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_css_contents(): string {
+		return '';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_js_contents(): string {
+		return '';
 	}
 
 	/**

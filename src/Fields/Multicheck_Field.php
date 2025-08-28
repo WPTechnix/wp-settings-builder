@@ -34,7 +34,6 @@ class Multicheck_Field extends Abstract_Field {
 	 */
 	public function render(): void {
 		$options        = $this->get_options();
-		$html_prefix    = $this->get_html_prefix();
 		$current_values = $this->get_value();
 		$field_name     = $this->get_name() . '[]'; // Append [] for array submission.
 
@@ -48,12 +47,11 @@ class Multicheck_Field extends Abstract_Field {
 			$fields_html[] = sprintf(
 				// Wrap each checkbox in its own label for accessibility and layout control.
 				// A surrounding <div> or <p> could be used in custom CSS for line breaks.
-				'<label for="%s" class="%s-multicheck-label">
+				'<label for="%s" class="wptx-multicheck-label">
 					<input type="checkbox" id="%s" name="%s" value="%s" %s %s />
 					%s
 				</label>',
 				esc_attr( $checkbox_id ),
-				esc_attr( $html_prefix ),
 				esc_attr( $checkbox_id ),
 				esc_attr( $field_name ),
 				esc_attr( (string) $option_value ),
@@ -130,5 +128,20 @@ class Multicheck_Field extends Abstract_Field {
 
 		// Re-index the array and ensure all values are strings for consistent storage.
 		return array_values( array_map( 'strval', $sanitized_values ) );
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	public static function get_css_contents(): string {
+		return <<<'CSS'
+.wptx-multicheck-label {
+	display: block;
+	margin-bottom: 10px;
+}
+.wptx-multicheck-label:not(:has(:disabled)):not(:has(:read-only)) {
+	cursor: pointer;
+}
+CSS;
 	}
 }

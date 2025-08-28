@@ -38,6 +38,22 @@ namespace WPTechnix\WP_Settings_Builder\Internal;
  *  icon: string
  * }
  *
+ * @phpstan-type Style_Extra 'all'|'print'|'screen'
+ *
+ * @phpstan-type Script_Extra bool|array{
+ *   strategy?: string,
+ *   in_footer?: bool,
+ * }
+ *
+ * @phpstan-type Asset array{
+ *   handle: non-empty-string,
+ *   type: 'css'|'js',
+ *   src: non-empty-string,
+ *   version?: false|non-empty-string,
+ *   dependencies?: non-empty-string[],
+ *   extra?: Script_Extra|Style_Extra
+ * }
+ *
  * @phpstan-type Fields_Map array<non-empty-string, Field_Config>
  * @phpstan-type Sections_Map array<non-empty-string, Section_Config>
  * @phpstan-type Tabs_Map array<non-empty-string, Tab_Config>
