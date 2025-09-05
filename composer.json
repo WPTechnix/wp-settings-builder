@@ -1,6 +1,6 @@
 {
     "name": "wptechnix/wp-settings-builder",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "A modern, object-oriented, and fluent builder framework for creating complex and maintainable WordPress settings pages with minimal boilerplate",
     "type": "library",
     "license": "MIT",
@@ -9,7 +9,7 @@
         "settings",
         "options",
         "framework",
-        "settings-builder" 
+        "settings-builder"
     ],
     "authors": [
         {

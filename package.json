@@ -3,13 +3,13 @@
   "description": "A modern, object-oriented, and fluent builder framework for creating complex and maintainable WordPress settings pages with minimal boilerplate",
   "license": "MIT",
   "keywords": [
-      "wordpress",
-      "settings",
-      "options",
-      "framework",
-      "settings-builder" 
+    "wordpress",
+    "settings",
+    "options",
+    "framework",
+    "settings-builder"
   ],
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "WPTechnix <developers@wptechnix.com>",
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
