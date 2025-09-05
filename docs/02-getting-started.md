@@ -128,7 +128,6 @@ function my_plugin_register_settings_page(): void {
 
 // We hook our function to 'admin_init', the standard hook for registering settings.
 add_action( 'admin_init', __NAMESPACE__ . '\my_plugin_register_settings_page' );
-
 ```
 
 ---

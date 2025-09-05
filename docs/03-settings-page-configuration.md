@@ -129,7 +129,7 @@ If your page is simple, just omit the `add_tab()` calls. When you add sections, 
 $page->add_section(
     'main_settings',
     'Main Plugin Settings',
-    'All the important settings are right here.'
+    'All important settings are right here.'
     // The tab_id argument is omitted
 );
 
@@ -138,7 +138,8 @@ $page->add_section(
     'Other Settings'
 );
 
-// Fields added to these sections will appear one after another on the same page.```
+// Fields added to these sections will appear one after another on the same page.
+```
 
 With your page structure defined, you are now ready to populate it with fields. The next guides will cover every available field type in detail.
 

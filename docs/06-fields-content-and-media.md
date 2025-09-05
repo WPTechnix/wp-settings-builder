@@ -26,15 +26,21 @@ For a complete list of options, see the official [WordPress Developer documentat
 #### Example
 
 ```php
-$page->add_field( 'site_footer_bio', 'content_section', 'wysiwyg', 'Footer Biography', [
-    'description' => 'This content will appear in the site footer.',
-    'default'     => '<h2>About Us</h2><p>We are an awesome company.</p>',
-    'editor_settings' => [
-        'textarea_rows' => 8,
-        'media_buttons' => false, // Don't allow images in the bio
-        'teeny'         => true,  // Use the minimal "teeny" editor
-    ],
-]);
+$page->add_field( 
+    'site_footer_bio',
+    'content_section', 
+    'wysiwyg', 
+    'Footer Biography', 
+        [
+        'description' => 'This content will appear in the site footer.',
+        'default'     => '<h2>About Us</h2><p>We are an awesome company.</p>',
+        'editor_settings' => [
+            'textarea_rows' => 8,
+            'media_buttons' => false, // Don't allow images in the bio
+            'teeny'         => true,  // Use the minimal "teeny" editor
+        ],
+    ]
+);
 ```
 
 ---
@@ -54,17 +60,23 @@ $page->add_field( 'site_footer_bio', 'content_section', 'wysiwyg', 'Footer Biogr
 #### Example
 
 ```php
-$page->add_field( 'header_scripts', 'advanced_section', 'code_editor', 'Header Scripts', [
-    'description' => 'Add scripts to the <head> of your site. Use with caution.',
-    'mode'        => 'text/html',
-    'html_attributes' => [
-        'rows' => 10,
-    ],
-    'editor_settings' => [
-        'lineNumbers' => true,
-        'indentUnit'  => 4,
-    ],
-]);
+$page->add_field(
+    'header_scripts', 
+    'advanced_section', 
+    'code_editor', 
+    'Header Scripts', 
+    [
+        'description' => 'Add scripts to the <head> of your site. Use with caution.',
+        'mode'        => 'text/html',
+        'html_attributes' => [
+            'rows' => 10,
+        ],
+        'editor_settings' => [
+            'lineNumbers' => true,
+            'indentUnit'  => 4,
+        ],
+    ]
+);
 ```
 
 ---
@@ -86,14 +98,20 @@ Use the `'media_settings'` array to customize the Media Library modal window.
 #### Example
 
 ```php
-$page->add_field( 'site_logo', 'branding_section', 'media', 'Site Logo', [
-    'description' => 'Upload or select the primary logo for the website.',
-    'media_settings' => [
-        'title'        => 'Choose a Logo',
-        'button_text'  => 'Use this Logo',
-        'library_type' => 'image', // Only allow images to be selected
-    ],
-]);
+$page->add_field( 
+    'site_logo', 
+    'branding_section', 
+    'media', 
+    'Site Logo', 
+    [
+        'description' => 'Upload or select the primary logo for the website.',
+        'media_settings' => [
+            'title'        => 'Choose a Logo',
+            'button_text'  => 'Use this Logo',
+            'library_type' => 'image', // Only allow images to be selected
+        ],
+    ]
+);
 ```
 
 ---

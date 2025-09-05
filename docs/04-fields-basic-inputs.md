@@ -30,13 +30,19 @@ The following keys can be used in the `$extras` array for most basic input field
 #### Example
 
 ```php
-$page->add_field( 'company_name', 'general_section', 'text', 'Company Name', [
-    'description' => 'Enter the name of your business.',
-    'default'     => 'My Awesome Company',
-    'html_attributes' => [
-        'placeholder' => 'e.g., Stark Industries',
-    ],
-]);
+$page->add_field(
+    'company_name', 
+    'general_section', 
+    'text', 
+    'Company Name',
+    [
+        'description' => 'Enter the name of your business.',
+        'default'     => 'My Awesome Company',
+        'html_attributes' => [
+            'placeholder' => 'e.g., Stark Industries',
+        ],
+    ]
+);
 ```
 
 ---
@@ -50,12 +56,18 @@ $page->add_field( 'company_name', 'general_section', 'text', 'Company Name', [
 #### Example
 
 ```php
-$page->add_field( 'privacy_policy_url', 'general_section', 'url', 'Privacy Policy URL', [
-    'description' => 'Link to your website\'s privacy policy.',
-    'html_attributes' => [
-        'placeholder' => 'https://example.com/privacy',
-    ],
-]);
+$page->add_field( 
+    'privacy_policy_url', 
+    'general_section', 
+    'url', 
+    'Privacy Policy URL', 
+    [
+        'description' => 'Link to your website\'s privacy policy.',
+        'html_attributes' => [
+            'placeholder' => 'https://example.com/privacy',
+        ],
+    ]
+);
 ```
 
 ---
@@ -69,10 +81,16 @@ $page->add_field( 'privacy_policy_url', 'general_section', 'url', 'Privacy Polic
 #### Example
 
 ```php
-$page->add_field( 'support_email', 'general_section', 'email', 'Support Email', [
-    'description' => 'The email address where customers can reach you for support.',
-    'default'     => get_option('admin_email'),
-]);
+$page->add_field( 
+    'support_email', 
+    'general_section', 
+    'email', 
+    'Support Email', 
+    [
+        'description' => 'The email address where customers can reach you for support.',
+        'default'     => get_option('admin_email'),
+    ]
+);
 ```
 
 ---
@@ -86,15 +104,21 @@ $page->add_field( 'support_email', 'general_section', 'email', 'Support Email', 
 #### Example
 
 ```php
-$page->add_field( 'items_per_page', 'display_section', 'number', 'Items Per Page', [
-    'description' => 'How many items to show on a single page.',
-    'default'     => 10,
-    'html_attributes' => [
-        'min'  => 1,
-        'max'  => 50,
-        'step' => 1,
-    ],
-]);
+$page->add_field( 
+    'items_per_page',
+    'display_section',
+    'number',
+    'Items Per Page',
+    [
+        'description' => 'How many items to show on a single page.',
+        'default'     => 10,
+        'html_attributes' => [
+            'min'  => 1,
+            'max'  => 50,
+            'step' => 1,
+        ],
+    ]
+);
 ```
 
 ---
@@ -113,12 +137,18 @@ $page->add_field( 'items_per_page', 'display_section', 'number', 'Items Per Page
 #### Example
 
 ```php
-$page->add_field( 'api_secret_key', 'api_section', 'password', 'API Secret Key', [
-    'description' => 'Your secret key is stored securely and is never shown here.',
-    'html_attributes' => [
-        'autocomplete' => 'new-password', // Helps prevent browser auto-fill
-    ],
-]);
+$page->add_field( 
+    'api_secret_key', 
+    'api_section', 
+    'password', 
+    'API Secret Key', 
+    [
+        'description' => 'Your secret key is stored securely and is never shown here.',
+        'html_attributes' => [
+            'autocomplete' => 'new-password', // Helps prevent browser auto-fill
+        ],
+    ]
+);
 ```
 
 ---
@@ -132,14 +162,20 @@ $page->add_field( 'api_secret_key', 'api_section', 'password', 'API Secret Key',
 #### Example
 
 ```php
-$page->add_field( 'custom_css', 'advanced_section', 'textarea', 'Custom CSS', [
-    'description' => 'Add custom CSS rules here. They will be loaded on the front-end.',
-    'html_attributes' => [
-        'rows'        => 8,
-        'cols'        => 50,
-        'placeholder' => '.my-class { color: red; }',
-    ],
-]);
+$page->add_field( 
+    'custom_css', 
+    'advanced_section', 
+    'textarea', 
+    'Custom CSS', 
+    [
+        'description' => 'Add custom CSS rules here. They will be loaded on the front-end.',
+        'html_attributes' => [
+            'rows'        => 8,
+            'cols'        => 50,
+            'placeholder' => '.my-class { color: red; }',
+        ],
+    ]
+);
 ```
 
 ---
@@ -154,10 +190,16 @@ $page->add_field( 'custom_css', 'advanced_section', 'textarea', 'Custom CSS', [
 #### Example
 
 ```php
-$page->add_field( 'primary_brand_color', 'display_section', 'color', 'Primary Brand Color', [
-    'description' => 'Select the primary color for your theme.',
-    'default'     => '#3858e9',
-]);
+$page->add_field(
+    'primary_brand_color', 
+    'display_section', 
+    'color', 
+    'Primary Brand Color', 
+    [
+        'description' => 'Select the primary color for your theme.',
+        'default'     => '#3858e9',
+    ]
+);
 ```
 
 With these basic fields, you can build the foundation of most settings pages. The next guide will explore fields designed for making choices, like toggles, radio buttons, and dropdowns.
