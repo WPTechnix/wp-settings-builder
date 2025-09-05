@@ -37,14 +37,20 @@ The following keys in the `$extras` array are used to configure the date and tim
 #### Example
 
 ```php
-$page->add_field( 'start_date', 'event_section', 'date', 'Event Start Date', [
-    'description' => 'The date the event begins.',
-    'default'     => date('Y-m-d'), // Defaults to today
-    'display_format' => 'F j, Y', // Displays as "October 26, 2025"
-    'flatpickr_options' => [
-        'minDate' => 'today', // Disables selection of past dates
-    ],
-]);
+$page->add_field(
+    'start_date',
+    'event_section', 
+    'date', 
+    'Event Start Date', 
+    [
+        'description' => 'The date the event begins.',
+        'default'     => date('Y-m-d'), // Defaults to today
+        'display_format' => 'F j, Y', // Displays as "October 26, 2025"
+        'flatpickr_options' => [
+            'minDate' => 'today', // Disables selection of past dates
+        ],
+    ]
+);
 ```
 
 ---
@@ -58,11 +64,17 @@ $page->add_field( 'start_date', 'event_section', 'date', 'Event Start Date', [
 #### Example
 
 ```php
-$page->add_field( 'opening_time', 'hours_section', 'time', 'Opening Time', [
-    'description' => 'Select the store\'s opening time.',
-    'default'     => '09:00:00',
-    'display_format' => 'h:i K', // Displays as "09:00 AM"
-]);
+$page->add_field( 
+    'opening_time', 
+    'hours_section', 
+    'time', 
+    'Opening Time', 
+    [
+        'description' => 'Select the store\'s opening time.',
+        'default'     => '09:00:00',
+        'display_format' => 'h:i K', // Displays as "09:00 AM"
+    ]
+);
 ```
 
 ---
@@ -76,14 +88,20 @@ $page->add_field( 'opening_time', 'hours_section', 'time', 'Opening Time', [
 #### Example
 
 ```php
-$page->add_field( 'sale_starts', 'event_section', 'date_time', 'Sale Starts On', [
-    'description' => 'The exact date and time the sale will become active.',
-    'display_format' => 'M j, Y @ h:i A', // Displays as "Nov 27, 2025 @ 09:00 AM"
-    'flatpickr_options' => [
-        'enableSeconds' => false,
-        'minuteIncrement' => 15,
-    ],
-]);
+$page->add_field( 
+    'sale_starts',
+    'event_section',
+    'date_time', 
+    'Sale Starts On', 
+    [
+        'description' => 'The exact date and time the sale will become active.',
+        'display_format' => 'M j, Y @ h:i A', // Displays as "Nov 27, 2025 @ 09:00 AM"
+        'flatpickr_options' => [
+            'enableSeconds' => false,
+            'minuteIncrement' => 15,
+        ],
+    ]
+);
 ```
 
 ---
@@ -98,12 +116,18 @@ $page->add_field( 'sale_starts', 'event_section', 'date_time', 'Sale Starts On',
 #### Example
 
 ```php
-$page->add_field( 'vacation_period', 'booking_section', 'date_range', 'Vacation Period', [
-    'description' => 'Select the start and end dates of the booking.',
-    // The default value must be a PHP array of strings
-    'default' => ['2025-08-01', '2025-08-15'],
-    'display_format' => 'M j, Y',
-]);
+$page->add_field(
+    'vacation_period', 
+    'booking_section', 
+    'date_range', 
+    'Vacation Period',
+     [
+        'description' => 'Select the start and end dates of the booking.',
+        // The default value must be a PHP array of strings
+        'default' => ['2025-08-01', '2025-08-15'],
+        'display_format' => 'M j, Y',
+    ]
+);
 ```
 
 ---
@@ -118,10 +142,16 @@ $page->add_field( 'vacation_period', 'booking_section', 'date_range', 'Vacation 
 #### Example
 
 ```php
-$page->add_field( 'maintenance_window', 'advanced_section', 'date_time_range', 'Maintenance Window', [
-    'description' => 'The website may be unavailable during this period.',
-    'display_format' => 'M j, h:i K',
-]);
+$page->add_field(
+     'maintenance_window',
+    'advanced_section', 
+    'date_time_range', 
+    'Maintenance Window', 
+    [
+        'description' => 'The website may be unavailable during this period.',
+        'display_format' => 'M j, h:i K',
+    ]
+);
 ```
 
 With these fields, you can capture any date or time-based data you need. The next guide covers relational fields, which allow you to link to other WordPress content like posts, users, and terms.

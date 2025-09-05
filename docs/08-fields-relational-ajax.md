@@ -27,12 +27,18 @@ The `'query_args'` array is passed to `WP_Query`. You can use any valid `WP_Quer
 #### Example: Select a single Page
 
 ```php
-$page->add_field( 'featured_page', 'homepage_section', 'post', 'Featured Page', [
-    'description' => 'Select a page to feature on the homepage.',
-    'query_args' => [
-        'post_type' => 'page',
-    ],
-]);
+$page->add_field( 
+    'featured_page', 
+    'homepage_section', 
+    'post', 
+    'Featured Page', 
+    [
+        'description' => 'Select a page to feature on the homepage.',
+        'query_args' => [
+            'post_type' => 'page',
+        ],
+    ]
+);
 ```
 
 ---
@@ -50,13 +56,19 @@ Works identically to the single `post` field.
 #### Example: Select multiple "Product" CPT items
 
 ```php
-$page->add_field( 'related_products', 'product_section', 'posts', 'Related Products', [
-    'description' => 'Select products to show as related items.',
-    'query_args' => [
-        'post_type' => 'product',
-        'post_status' => 'publish',
-    ],
-]);
+$page->add_field(
+    'related_products',
+    'product_section',
+    'posts', 
+    'Related Products', 
+    [
+        'description' => 'Select products to show as related items.',
+        'query_args' => [
+            'post_type' => 'product',
+            'post_status' => 'publish',
+        ],
+    ]
+);
 ```
 
 ---
@@ -76,12 +88,18 @@ The `'query_args'` array is passed to `WP_User_Query`. You can use any of its va
 #### Example: Select a single user with the "Editor" role
 
 ```php
-$page->add_field( 'content_approver', 'workflow_section', 'user', 'Content Approver', [
-    'description' => 'This user will be responsible for approving new content.',
-    'query_args' => [
-        'role' => 'editor',
-    ],
-]);
+$page->add_field(
+    'content_approver', 
+    'workflow_section',
+    'user', 
+    'Content Approver',
+    [
+        'description' => 'This user will be responsible for approving new content.',
+        'query_args' => [
+            'role' => 'editor',
+        ],
+    ]
+);
 ```
 
 ---
@@ -95,12 +113,18 @@ $page->add_field( 'content_approver', 'workflow_section', 'user', 'Content Appro
 #### Example: Select multiple users from different roles
 
 ```php
-$page->add_field( 'project_team', 'project_section', 'users', 'Project Team', [
-    'description' => 'Assign team members to this project.',
-    'query_args' => [
-        'role__in' => ['editor', 'author'],
-    ],
-]);
+$page->add_field( 
+    'project_team', 
+    'project_section',
+    'users', 
+    'Project Team', 
+    [
+        'description' => 'Assign team members to this project.',
+        'query_args' => [
+            'role__in' => ['editor', 'author'],
+        ],
+    ]
+);
 ```
 
 ---
@@ -120,13 +144,19 @@ The `'query_args'` array is passed to `get_terms()`. You can use any of its vali
 #### Example: Select a single "Category"
 
 ```php
-$page->add_field( 'default_category', 'general_section', 'term', 'Default Post Category', [
-    'description' => 'New posts will be assigned to this category by default.',
-    'query_args' => [
-        'taxonomy' => 'category',
-        'hide_empty' => false, // Show empty categories
-    ],
-]);
+$page->add_field( 
+    'default_category',
+    'general_section', 
+    'term', 
+    'Default Post Category', 
+    [
+        'description' => 'New posts will be assigned to this category by default.',
+        'query_args' => [
+            'taxonomy' => 'category',
+            'hide_empty' => false, // Show empty categories
+        ],
+    ]
+);
 ```
 
 ---
@@ -140,12 +170,18 @@ $page->add_field( 'default_category', 'general_section', 'term', 'Default Post C
 #### Example: Select multiple "post_tag" terms
 
 ```php
-$page->add_field( 'post_tags', 'post_section', 'terms', 'Default Tags', [
-    'description' => 'These tags will be automatically added to new posts.',
-    'query_args' => [
-        'taxonomy' => 'post_tag',
-    ],
-]);
+$page->add_field( 
+    'post_tags', 
+    'post_section', 
+    'terms', 
+    'Default Tags', 
+    [
+        'description' => 'These tags will be automatically added to new posts.',
+        'query_args' => [
+            'taxonomy' => 'post_tag',
+        ],
+    ]
+);
 ```
 
 These fields simplify the process of creating dynamic, interconnected settings. Next, we will explore one of the framework's most powerful features: conditional logic.

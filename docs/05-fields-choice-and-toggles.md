@@ -24,10 +24,16 @@ A key `extra` for many of these fields is the `'options'` array. This is an asso
 #### Example
 
 ```php
-$page->add_field( 'open_links_in_new_tab', 'general_section', 'checkbox', 'New Tab Behavior', [
-    'description' => 'Enable this to open all external links in a new browser tab.',
-    'default'     => true,
-]);
+$page->add_field( 
+    'open_links_in_new_tab', 
+    'general_section', 
+    'checkbox', 
+    'New Tab Behavior', 
+    [
+        'description' => 'Enable this to open all external links in a new browser tab.',
+        'default'     => true,
+    ]
+);
 ```
 
 ---
@@ -42,10 +48,16 @@ $page->add_field( 'open_links_in_new_tab', 'general_section', 'checkbox', 'New T
 #### Example
 
 ```php
-$page->add_field( 'enable_dark_mode', 'display_section', 'switch', 'Dark Mode', [
-    'description' => 'Activate the dark mode theme for the front-end.',
-    'default'     => false,
-]);
+$page->add_field( 
+    'enable_dark_mode', 
+    'display_section', 
+    'switch', 
+    'Dark Mode', 
+    [
+        'description' => 'Activate the dark mode theme for the front-end.',
+        'default'     => false,
+    ]
+);
 ```
 
 ---
@@ -59,15 +71,21 @@ $page->add_field( 'enable_dark_mode', 'display_section', 'switch', 'Dark Mode', 
 #### Example
 
 ```php
-$page->add_field( 'thumbnail_position', 'display_section', 'choice', 'Thumbnail Position', [
-    'description' => 'Choose where to display the featured image on single posts.',
-    'default'     => 'above_title',
-    'options'     => [
-        'above_title' => 'Above the Post Title',
-        'below_title' => 'Below the Post Title',
-        'no_thumb'    => 'Do Not Display',
-    ],
-]);
+$page->add_field( 
+    'thumbnail_position', 
+    'display_section', 
+    'choice', 
+    'Thumbnail Position', 
+    [
+        'description' => 'Choose where to display the featured image on single posts.',
+        'default'     => 'above_title',
+        'options'     => [
+            'above_title' => 'Above the Post Title',
+            'below_title' => 'Below the Post Title',
+            'no_thumb'    => 'Do Not Display',
+        ],
+    ]
+);
 ```
 
 ---
@@ -81,15 +99,21 @@ $page->add_field( 'thumbnail_position', 'display_section', 'choice', 'Thumbnail 
 #### Example
 
 ```php
-$page->add_field( 'content_alignment', 'display_section', 'buttons_group', 'Content Alignment', [
-    'description' => 'Select the default text alignment for your content.',
-    'default'     => 'left',
-    'options'     => [
-        'left'   => 'Left',
-        'center' => 'Center',
-        'right'  => 'Right',
-    ],
-]);
+$page->add_field( 
+    'content_alignment', 
+    'display_section', 
+    'buttons_group', 
+    'Content Alignment', 
+    [
+        'description' => 'Select the default text alignment for your content.',
+        'default'     => 'left',
+        'options'     => [
+            'left'   => 'Left',
+            'center' => 'Center',
+            'right'  => 'Right',
+        ],
+    ]
+);
 ```
 
 ---
@@ -104,16 +128,22 @@ $page->add_field( 'content_alignment', 'display_section', 'buttons_group', 'Cont
 #### Example
 
 ```php
-$page->add_field( 'font_selection', 'display_section', 'select', 'Primary Font', [
-    'description' => 'Choose a font from the Google Fonts library.',
-    'default'     => 'roboto',
-    'options'     => [
-        'roboto'    => 'Roboto',
-        'open_sans' => 'Open Sans',
-        'lato'      => 'Lato',
-        'montserrat'=> 'Montserrat',
-    ],
-]);
+$page->add_field( 
+    'font_selection', 
+    'display_section', 
+    'select', 
+    'Primary Font', 
+    [
+        'description' => 'Choose a font from the Google Fonts library.',
+        'default'     => 'roboto',
+        'options'     => [
+            'roboto'    => 'Roboto',
+            'open_sans' => 'Open Sans',
+            'lato'      => 'Lato',
+            'montserrat'=> 'Montserrat',
+        ],
+    ]
+);
 ```
 
 ---
@@ -128,16 +158,22 @@ $page->add_field( 'font_selection', 'display_section', 'select', 'Primary Font',
 #### Example
 
 ```php
-$page->add_field( 'post_types_to_search', 'general_section', 'multi_check', 'Searchable Content', [
-    'description' => 'Select which post types should be included in search results.',
-    'default'     => ['post', 'page'],
-    'options'     => [
-        'post'    => 'Posts',
-        'page'    => 'Pages',
-        'product' => 'Products',
-        'docs'    => 'Documentation',
-    ],
-]);
+$page->add_field( 
+    'post_types_to_search',
+    'general_section', 
+    'multi_check', 
+    'Searchable Content', 
+    [
+        'description' => 'Select which post types should be included in search results.',
+        'default'     => ['post', 'page'],
+        'options'     => [
+            'post'    => 'Posts',
+            'page'    => 'Pages',
+            'product' => 'Products',
+            'docs'    => 'Documentation',
+        ],
+    ]
+);
 ```
 
 ---
@@ -153,17 +189,23 @@ $page->add_field( 'post_types_to_search', 'general_section', 'multi_check', 'Sea
 #### Example
 
 ```php
-$page->add_field( 'user_roles_access', 'advanced_section', 'multi_select', 'Roles with Access', [
-    'description' => 'Select which user roles can access the premium features.',
-    'default'     => ['administrator', 'editor'],
-    'options'     => [
-        'administrator' => 'Administrator',
-        'editor'        => 'Editor',
-        'author'        => 'Author',
-        'contributor'   => 'Contributor',
-        'subscriber'    => 'Subscriber',
-    ],
-]);
+$page->add_field( 
+    'user_roles_access', 
+    'advanced_section', 
+    'multi_select', 
+    'Roles with Access', 
+    [
+        'description' => 'Select which user roles can access the premium features.',
+        'default'     => ['administrator', 'editor'],
+        'options'     => [
+            'administrator' => 'Administrator',
+            'editor'        => 'Editor',
+            'author'        => 'Author',
+            'contributor'   => 'Contributor',
+            'subscriber'    => 'Subscriber',
+        ],
+    ]
+);
 ```
 
 Now that you've mastered choice-based fields, the next section will cover fields for handling rich content, code, and media from the WordPress library.

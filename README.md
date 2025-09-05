@@ -1,6 +1,6 @@
 # WP Settings Builder Framework
 
-A modern, fluent, and extensible object-oriented framework for creating powerful and professional settings pages in WordPress.
+Stop fighting the WordPress Settings API. This framework provides a modern, object-oriented, and fluent API that streamlines the creation of powerful and maintainable settings pages.
 
 [![Latest Version](https://img.shields.io/packagist/v/wptechnix/wp-settings-builder.svg?style=for-the-badge)](https://packagist.org/packages/wptechnix/wp-settings-builder)
 [![Total Downloads](https://img.shields.io/packagist/dt/wptechnix/wp-settings-builder.svg?style=for-the-badge)](https://packagist.org/packages/wptechnix/wp-settings-builder)
@@ -8,150 +8,205 @@ A modern, fluent, and extensible object-oriented framework for creating powerful
 
 ---
 
-Tired of wrestling with the procedural WordPress Settings API? The WP Settings Builder provides a clean, chainable API that makes building maintainable and feature-rich settings pages a breeze. Go from a simple options page to a complex, tabbed interface with conditional logic without writing messy, hard-to-read code.
-
-## Why Use This Framework?
-
--   ✅ **Fluent, Modern API**: A clean and readable interface for defining pages, tabs, sections, and fields.
--   🚀 **Comprehensive Field Library**: Over 30 field types included, from basic text inputs to advanced AJAX-powered relationship pickers.
--   🧠 **Built-in Conditional Logic**: Natively show or hide fields based on the values of other fields using a simple and powerful rules engine.
--   ⚙️ **Automatic Asset Management**: CSS and JavaScript for fields like color pickers, date pickers, and Select2 are loaded automatically only when needed.
--   ⚡ **AJAX-Powered Fields**: Easily add searchable fields for Posts, Pages, Users, and Terms that load data on the fly, ensuring excellent performance.
--   🎨 **Flexible Layouts**: Effortlessly create complex tabbed interfaces or simple, single-column settings pages.
--   🔒 **Secure & Robust**: Built-in sanitization for all fields, secure handling of sensitive data, and fully type-hinted for reliability.
--   🧩 **Extensible**: Easily register your own custom field types to extend the framework's capabilities.
-
 ## Showcase
 
-Create anything from a simple page to a complex, tabbed interface with icons.
+Create anything from a simple plugin options page to a complex, tabbed interface for a theme, all with the same clean API.
 
-### **Simple Layout**
+#### **Simple Layout**
+
+A single page with one or more sections of fields. Perfect for most plugins.
+
 ![Simple Settings Page Example](docs/screenshot-01.png)
 
-### **Tabbed Layout**![Tabbed Settings Page Example](docs/screenshot-02.png)
+#### **Tabbed Layout**
+
+Organize a large number of settings into a clean, tabbed interface, complete with Dashicons for a native WordPress feel.
+
+![Tabbed Settings Page Example](docs/screenshot-02.png)
+
+## Why This Framework?
+
+-   ✅ **Declarative & Fluent API**: Define entire pages with a clean, chainable API that is easy to read and version control.
+-   🚀 **Comprehensive Field Library**: Over 30 field types included, from basic inputs to advanced AJAX-powered relationship pickers.
+-   🧠 **Built-in Conditional Logic**: Show or hide fields based on other fields' values without writing a single line of JavaScript.
+-   ⚙️ **Intelligent Asset Loading**: CSS and JS are loaded *only when a field that needs them is used*, keeping your admin pages lightweight and fast.
+-   ⚡ **High-Performance Relational Fields**: Add searchable fields for Posts, Users, and Terms that load data via AJAX, ensuring excellent performance even on sites with thousands of entries.
+-   🔒 **Secure by Default**: Built-in sanitization for all standard field types and secure handling for sensitive data like password fields (values are never rendered in the HTML).
+-   🧩 **Truly Extensible**: Designed from the ground up to be extended. Register your own custom field types to meet any project requirement.
+
+## The 3-Step Workflow
+
+The framework follows a simple and memorable pattern:
+
+1.  **`create()`**: Get a `Settings_Builder` instance and create a new `Settings_Page`.
+2.  **`configure()`**: Use the fluent methods (`set_page_title`, `add_section`, `add_field`, etc.) to define the entire structure and content of your page.
+3.  **`init()`**: Make one final call to `init()` to build the page and register all the necessary hooks with WordPress.
 
 ## Installation
 
-Install the framework into your project using Composer:
+Install via Composer into your plugin or theme:
 
 ```bash
 composer require wptechnix/wp-settings-builder
 ```
 
-Make sure your project includes the Composer autoloader:
+Ensure your project includes the Composer autoloader:
 
 ```php
 require_once __DIR__ . '/vendor/autoload.php';
 ```
 
-## Getting Started
+## Quick Start: A Practical Example
 
-The following example creates a simple settings page with two fields under the main WordPress "Settings" menu. For a complete walkthrough, see the [Getting Started Guide](./docs/02-getting-started.md).
+This example creates a settings page with three powerful fields and shows how to retrieve a saved value.
+
+#### 1. Create the Settings Page
 
 ```php
 <?php
 use WPTechnix\WP_Settings_Builder\Settings_Builder;
 
-add_action( 'admin_init', function() {
-
-    // Step 1: Create a page instance
+// Use a named function for better organization
+function my_plugin_settings_init() {
+    // 1. CREATE: Get a builder and create a page instance.
     $page = ( new Settings_Builder() )->create( 'my_plugin_options', 'my-plugin-settings' );
 
-    // Step 2: Configure the page
-    $page->set_page_title( 'My Plugin Settings' )
+    // 2. CONFIGURE: Define the page's location, sections, and fields.
+    $page->set_page_title( 'My Awesome Plugin Settings' )
          ->set_menu_title( 'My Plugin' )
-         ->set_parent_slug( 'options-general.php' );
+         ->set_parent_slug( 'tools.php' ); // Places it under the "Tools" menu
 
-    // Step 3: Add a section
-    $page->add_section( 'general_section', 'General Settings' );
+    $page->add_section( 'api_section', 'API & General Configuration' );
 
-    // Step 4: Add fields
-    $page->add_field( 'api_key', 'general_section', 'text', 'API Key', [
-        'description' => 'Enter your secret API key.'
-    ]);
-    
-    $page->add_field( 'enable_feature', 'general_section', 'switch', 'Enable Awesome Feature', [
-        'default' => true
-    ]);
+    $page->add_field( 
+        'api_key', 
+        'api_section',
+        'password', 
+        'Service API Key',
+        [
+            'description' => 'Your secret key is masked and protected.',
+        ]
+    );
 
-    // Step 5: Build and register the page
+    $page->add_field( 
+        'enable_feature', 
+        'api_section', 
+        'switch', 
+        'Enable Awesome Feature',
+        [
+            'description' => 'Turn the main feature on or off.',
+            'default'     => true,
+        ]
+    );
+
+    $page->add_field( 
+        'featured_post', 
+        'api_section', 
+        'post', 
+        'Featured Post', 
+        [
+            'description' => 'Type to search for a post to feature on the homepage.',
+            'query_args'  => [ 'post_type' => 'post' ],
+        ]
+    );
+
+    // 3. INITIALIZE: Build the page and register all WordPress hooks.
     $page->init();
-
-} );
+}
+add_action( 'admin_init', 'my_plugin_settings_init' );
 ```
 
----
+#### 2. Retrieve a Setting
 
-## Full Documentation
+To use a saved setting elsewhere in your code:
 
-While this README provides a quick overview, the comprehensive documentation will guide you through every feature, from basic setup to advanced customization.
+```php
+use WPTechnix\WP_Settings_Builder\Settings_Builder;
 
-*   **1. Core Concepts**
-    *   [Introduction](./docs/01-introduction.md)
-    *   [Getting Started](./docs/02-getting-started.md)
-    *   [Settings Page Configuration](./docs/03-settings-page-configuration.md)
+$settings_page = Settings_Builder::get_instance( 'my-plugin-settings' );
 
-*   **2. Field Guides**
-    *   [Basic Inputs](./docs/04-fields-basic-inputs.md) (Text, Number, Password, etc.)
-    *   [Choice and Toggles](./docs/05-fields-choice-and-toggles.md) (Select, Switch, Checkbox, etc.)
-    *   [Content and Media](./docs/06-fields-content-and-media.md) (WYSIWYG, Code Editor, Media Library)
-    *   [Date and Time](./docs/07-fields-date-and-time.md) (Date, Time, and Range Pickers)
-    *   [Relational (AJAX)](./docs/08-fields-relational-ajax.md) (Post, User, and Term Selectors)
-
-*   **3. Advanced Topics**
-    *   [Conditional Logic](./docs/09-conditional-logic.md)
-    *   [Advanced Guide: Creating Custom Fields](./docs/10-advanced-guide.md)
-    *   [Helpers and Methods](./docs/11-helpers-and-methods.md) (Programmatic Get/Set, Validation)
+if ( $settings_page ) {
+    $featured_post_id = $settings_page->get_setting( 'featured_post', 0 );
+    
+    if ( $featured_post_id > 0 ) {
+        // Now you can use this ID in a WP_Query or get_post().
+        $post_title = get_the_title( $featured_post_id );
+    }
+}
+```
 
 ---
 
 ## Field Reference Table
 
-This table is a quick reference for all available field types. For detailed examples, see the documentation guides linked above.
+This is a quick reference for all available field types. For detailed options and examples, see the full documentation guides.
 
-| Type | Description | Common `extras` Options |
-| :--- | :--- | :--- |
-| **Basic Inputs** |
-| `text` | A standard single-line text input. | `default`, `html_attributes` |
-| `url` | An input for URLs, sanitized with `esc_url_raw`. | `default`, `html_attributes` |
-| `email` | An input for email addresses. | `default`, `html_attributes` |
-| `password` | A secure input for API keys/passwords. The value is not shown. | `html_attributes` |
-| `number` | An HTML5 number input. | `default`, `html_attributes` (e.g., `['min'=>0]` ) |
-| `textarea` | A multi-line text area. | `default`, `html_attributes` (e.g., `['rows'=>5]` ) |
-| `color` | The native WordPress color picker. | `default` (e.g., `'#RRGGBB'`) |
-| **Choice & Toggles** |
-| `checkbox` | A standard single checkbox. | `description` (acts as clickable label), `default` (`true`/`false`) |
-| `switch` | A modern, styled toggle switch (boolean). | `description` (acts as clickable label), `default` (`true`/`false`) |
-| `choice` | Radio buttons for selecting one option. | `options` (`['val'=>'Label']`), `default` |
-| `buttons_group` | A styled, segmented button control (like radio buttons). | `options` (`['val'=>'Label']`), `default` |
-| `select` | A searchable dropdown (Select2) for a single choice. | `options` (`['val'=>'Label']`), `default` |
-| `multi_check` | A group of checkboxes for selecting multiple options. | `options`, `default` (as `array`) |
-| `multi_select` | A searchable dropdown (Select2) for multiple choices. | `options`, `default` (as `array`) |
-| **Content & Media** |
-| `wysiwyg` | The WordPress TinyMCE rich text editor. | `editor_settings` (see `wp_editor()`) |
-| `code_editor` | A syntax-highlighting code editor (CodeMirror). | `mode` (e.g., `'text/css'`), `editor_settings` |
-| `media` | Opens the WP Media Library to select a single item (stores ID). | `media_settings` (`['library_type'=>'image']`) |
-| `media_multiple` | Opens the WP Media Library to select multiple items (stores array of IDs). | `media_settings` |
-| **Date & Time Pickers** |
-| `date` | A date picker (Flatpickr). | `display_format` (PHP format), `default` |
-| `time` | A time picker (Flatpickr). | `display_format` (PHP format), `default` |
-| `date_time` | A combination date and time picker. | `display_format` (PHP format), `default` |
-| `date_range` | A date range picker (start and end date). | `display_format`, `default` (as `array`) |
-| `date_time_range` | A date and time range picker. | `display_format`, `default` (as `array`) |
-| **Relational (AJAX)** |
-| `post` | AJAX-powered search for a single post/page. | `query_args` (`['post_type'=>'page']`) |
-| `posts` | AJAX-powered search for multiple posts/pages. | `query_args` |
-| `user` | AJAX-powered search for a single user. | `query_args` (`['role'=>'editor']`) |
-| `users` | AJAX-powered search for multiple users. | `query_args` |
-| `term` | AJAX-powered search for a single taxonomy term. | `query_args` (`['taxonomy'=>'category']`) |
-| `terms` | AJAX-powered search for multiple taxonomy terms. | `query_args` |
-| **Helpers** |
-| `description` | Displays only text; does not save a value. Used for instructions. | `description` (accepts HTML) |
+| Type | Description | Saves As | Key Options |
+| :--- | :--- | :--- | :--- |
+| **Basic Inputs** | | | |
+| `text` | A standard single-line text input. | `string` | `default`, `html_attributes` |
+| `url` | An input for URLs. | `string` | `placeholder` |
+| `email` | An input for email addresses. | `string` | `default` |
+| `password` | A secure input for API keys/passwords. | `string` | `description` |
+| `number` | An HTML5 number input. | `string` | `default`, `min`, `max`, `step` |
+| `textarea` | A multi-line text area. | `string` | `rows`, `cols` |
+| `color` | The native WordPress color picker. | `string` | `default` |
+| **Choice & Toggles** | | | |
+| `checkbox` | A standard single checkbox. | `bool` | `description`, `default` |
+| `switch` | A modern, styled toggle switch. | `bool` | `description`, `default` |
+| `choice` | Radio buttons for selecting one option. | `string` | `options`, `default` |
+| `buttons_group` | A styled, segmented button control. | `string` | `options`, `default` |
+| `select` | A searchable dropdown (Select2). | `string` | `options`, `default` |
+| `multi_check` | Checkboxes for selecting multiple options. | `string[]` | `options`, `default` |
+| `multi_select` | A searchable multi-select dropdown. | `string[]` | `options`, `default` |
+| **Content & Media** | | | |
+| `wysiwyg` | The WordPress TinyMCE rich text editor. | `string` | `editor_settings` |
+| `code_editor` | A syntax-highlighting code editor. | `string` | `mode`, `editor_settings` |
+| `media` | Select a single item from the Media Library. | `int` | `media_settings` |
+| `media_multiple`| Select multiple items from the Media Library. | `int[]` | `media_settings` |
+| **Date & Time Pickers** | | | |
+| `date` | A date picker (Flatpickr). | `string` | `display_format`, `flatpickr_options` |
+| `time` | A time picker (Flatpickr). | `string` | `display_format`, `flatpickr_options` |
+| `date_time` | A combination date and time picker. | `string` | `display_format`, `flatpickr_options` |
+| `date_range` | A date range picker. | `string[]` | `display_format` |
+| `date_time_range`| A date and time range picker. | `string[]` | `display_format` |
+| **Relational (AJAX)** | | | |
+| `post` | AJAX search for a single post/page. | `int` | `query_args` |
+| `posts` | AJAX search for multiple posts/pages. | `int[]` | `query_args` |
+| `user` | AJAX search for a single user. | `int` | `query_args` |
+| `users` | AJAX search for multiple users. | `int[]` | `query_args` |
+| `term` | AJAX search for a single taxonomy term. | `int` | `query_args` |
+| `terms` | AJAX search for multiple taxonomy terms. | `int[]` | `query_args` |
+| **Helpers** | | | |
+| `description` | Displays read-only text/HTML. | `(not saved)` | `description` |
+
+---
+
+## Full Documentation
+
+For a deep dive into every feature and method, please see the full documentation.
+
+-   **Core Concepts**
+    -   [Introduction](./docs/01-introduction.md)
+    -   [Getting Started](./docs/02-getting-started.md)
+    -   [Settings Page Configuration](./docs/03-settings-page-configuration.md)
+-   **Field Guides**
+    -   [Basic Inputs](./docs/04-fields-basic-inputs.md)
+    -   [Choice and Toggles](./docs/05-fields-choice-and-toggles.md)
+    -   [Content and Media](./docs/06-fields-content-and-media.md)
+    -   [Date and Time](./docs/07-fields-date-and-time.md)
+    -   [Relational (AJAX)](./docs/08-fields-relational-ajax.md)
+-   **Advanced Topics**
+    -   [Conditional Logic](./docs/09-conditional-logic.md)
+    -   [Advanced Guide: Creating Custom Fields](./docs/10-advanced-guide.md)
+    -   [Helpers and Methods](./docs/11-helpers-and-methods.md)
+
+---
 
 ## Contributing
 
-Contributions are welcome! Please feel free to open a pull request or submit an issue with your suggestions.
+Contributions are welcome! Please feel free to open a pull request or submit an issue on the [GitHub repository](https://github.com/wptechnix/wp-settings-builder) with your suggestions or bug reports.
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE.md](LICENSE.md) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
