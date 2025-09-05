@@ -1,0 +1,33 @@
+# Ensure consistent line endings (LF) across all text files
+* text=auto eol=lf
+
+# Force LF in specific file types (for stricter control)
+*.md    text eol=lf
+*.json  text eol=lf
+*.xml   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.neon  text eol=lf
+*.php   text eol=lf
+
+# Exclude from GitHub language stats
+/.github/** linguist-documentation
+/docs/**    linguist-documentation
+/bin/**     linguist-vendored
+/docker/**  linguist-vendored
+
+# Exclude from GitHub-generated ZIP archives
+/tests                export-ignore
+/docker               export-ignore
+/bin                  export-ignore
+/docs                 export-ignore
+/examples             export-ignore
+/.git*                export-ignore
+/.husky               export-ignore
+/package.json         export-ignore
+/package-lock.json    export-ignore
+/.release-it.json     export-ignore
+/.editorconfig        export-ignore
+/phpcs.xml.dist       export-ignore
+/phpstan.neon.dist    export-ignore
+/phpunit.xml.dist     export-ignore

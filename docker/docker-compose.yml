@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        USER_ID: ${UID:-1000}
+        GROUP_ID: ${GID:-1000}
+        PHP_VERSION: ${PHP_VERSION:-8.4}
+    container_name: ${COMPOSE_PROJECT_NAME:-wp-settings-builder}-php
+    user: "${UID:-1000}:${GID:-1000}"
+    volumes:
+      - ../:/app
+      - ./php.ini:/usr/local/etc/php/conf.d/custom.ini
+    tty: true
+    stdin_open: true
+    networks:
+      - wp-settings-builder
+
+networks:
+  wp-settings-builder:
+    driver: bridge

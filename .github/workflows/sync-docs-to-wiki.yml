@@ -1,0 +1,20 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+
+permissions:
+  contents: write
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: Andrew-Chen-Wang/github-wiki-action@v4
+        with:
+          path: docs

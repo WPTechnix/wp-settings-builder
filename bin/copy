@@ -1,0 +1,41 @@
+#!/bin/bash
+
+set -e
+
+OVERRIDE=false
+
+# Parse options
+while [[ "$#" -gt 0 ]]; do
+  case "$1" in
+    -o|--override)
+      OVERRIDE=true
+      ;;
+    *)
+      echo "Unknown option: $1"
+      exit 1
+      ;;
+  esac
+  shift
+done
+
+copy_file() {
+  local src="$1"
+  local dest="$2"
+
+  if [ -f "$src" ]; then
+    if [ "$OVERRIDE" = true ] || [ ! -f "$dest" ]; then
+      cp "$src" "$dest"
+      echo "Copied $src -> $dest"
+    else
+      echo "Skipped $dest (already exists, use -o to override)"
+    fi
+  fi
+}
+
+copy_file "docker/.env.example" "docker/.env"
+copy_file "docker/php.ini.example" "docker/php.ini"
+copy_file "phpstan.neon.dist" "phpstan.neon"
+copy_file "phpcs.xml.dist" "phpcs.xml"
+copy_file "phpunit.xml.dist" "phpunit.xml"
+
+echo "Done."

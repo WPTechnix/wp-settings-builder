@@ -1,0 +1,55 @@
+{
+    "name": "wptechnix/wp-settings-builder",
+    "version": "0.1.0",
+    "description": "A modern, object-oriented, and fluent builder framework for creating complex and maintainable WordPress settings pages with minimal boilerplate",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "wordpress",
+        "settings",
+        "options",
+        "framework",
+        "settings-builder" 
+    ],
+    "authors": [
+        {
+            "name": "WPTechnix",
+            "email": "developers@wptechnix.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": ">=8.0"
+    },
+    "require-dev": {
+        "phpcompatibility/php-compatibility": "*",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "squizlabs/php_codesniffer": "^3",
+        "szepeviktor/phpstan-wordpress": "^2.0",
+        "wp-coding-standards/wpcs": "^3",
+        "phpcompatibility/phpcompatibility-wp": "^2"
+    },
+    "autoload": {
+        "psr-4": {
+            "WPTechnix\\WP_Settings_Builder\\": "src/"
+        }
+    },
+    "scripts": {
+        "fix:phpcbf": "vendor/bin/phpcbf || true",
+        "lint:phpcs": "vendor/bin/phpcs --report=full",
+        "lint:phpstan": "vendor/bin/phpstan analyse --memory-limit=2G --error-format=table",
+        "lint": [
+            "@fix:phpcbf",
+            "@lint:phpcs",
+            "@lint:phpstan"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

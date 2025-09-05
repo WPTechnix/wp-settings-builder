@@ -1,0 +1,31 @@
+{
+  "name": "wp-settings-builder",
+  "description": "A modern, object-oriented, and fluent builder framework for creating complex and maintainable WordPress settings pages with minimal boilerplate",
+  "license": "MIT",
+  "keywords": [
+      "wordpress",
+      "settings",
+      "options",
+      "framework",
+      "settings-builder" 
+  ],
+  "version": "0.1.0",
+  "author": "WPTechnix <developers@wptechnix.com>",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@release-it/bumper": "^7.0.5",
+    "@release-it/conventional-changelog": "^10.0.1",
+    "husky": "^9.1.7",
+    "release-it": "^19.0.4"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "release": "release-it"
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}
