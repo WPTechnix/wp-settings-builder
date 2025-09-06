@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Concrete implementation of Field_Factory_Interface.
  *

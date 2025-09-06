@@ -1,6 +1,8 @@
 <?php
 /**
  * WYSIWYG (TinyMCE) Editor Field.
+ *
+ * @package WPTechnix\WP_Settings_Builder\Fields
  */
 
 declare(strict_types=1);

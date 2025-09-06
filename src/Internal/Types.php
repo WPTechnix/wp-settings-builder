@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Defines shared PHPStan types for the library to ensure type safety and consistency.
  *

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Defines the contract for all field type objects.
  *

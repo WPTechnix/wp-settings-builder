@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The internal engine that bridges the pure services with the WordPress hook system.
  *

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * The public-facing factory for creating and configuring a settings page.
  *
