@@ -71,63 +71,54 @@ namespace MyAwesomePlugin\Admin;
 // Import the main builder class.
 use WPTechnix\WP_Settings_Builder\Settings_Builder;
 
-/**
- * The main function that builds and initializes our settings page.
- */
-function my_plugin_register_settings_page(): void {
+// Step 1: Create a page instance using the Settings_Builder.
+// The first argument is the 'option_name' where all data is stored in a single array.
+// The second argument is the unique 'page_slug' for the URL.
+$page = ( new Settings_Builder() )->create( 'my_plugin_options', 'my-plugin-settings' );
 
-    // Step 1: Create a page instance using the Settings_Builder.
-    // The first argument is the 'option_name' where all data is stored in a single array.
-    // The second argument is the unique 'page_slug' for the URL.
-    $page = ( new Settings_Builder() )->create( 'my_plugin_options', 'my-plugin-settings' );
+// Step 2: Configure the page's appearance and location in the admin menu.
+// These methods are chainable for clean, readable code.
+$page->set_page_title( 'My Awesome Plugin Settings' )
+        ->set_menu_title( 'My Plugin' )
+        ->set_parent_slug( 'options-general.php' ) // Places it under the main "Settings" menu
+        ->set_capability( 'manage_options' );      // Only admins can see it
 
-    // Step 2: Configure the page's appearance and location in the admin menu.
-    // These methods are chainable for clean, readable code.
-    $page->set_page_title( 'My Awesome Plugin Settings' )
-          ->set_menu_title( 'My Plugin' )
-          ->set_parent_slug( 'options-general.php' ) // Places it under the main "Settings" menu
-          ->set_capability( 'manage_options' );      // Only admins can see it
+// Step 3: Add a section. Sections are visual containers for grouping related fields.
+$page->add_section(
+    'general_section',                  // Unique ID for the section
+    'API & General Configuration',      // Title displayed on the page
+    'Configure the main settings for connecting to our service.' // Optional description
+);
 
-    // Step 3: Add a section. Sections are visual containers for grouping related fields.
-    $page->add_section(
-        'general_section',                  // Unique ID for the section
-        'API & General Configuration',      // Title displayed on the page
-        'Configure the main settings for connecting to our service.' // Optional description
-    );
+// Step 4: Add fields to the section you just created.
+$page->add_field(
+    'api_key',                          // Unique ID for the field (used for saving/retrieving data)
+    'general_section',                  // The ID of the section this field belongs to
+    'password',                         // The field type
+    'Service API Key',                  // The label for the field
+    [                                   // An array of extra options
+        'description' => 'Enter your secret API key from your service dashboard.',
+        'html_attributes' => [
+            'placeholder' => 'sk_xxxxxxxxxxxx',
+        ],
+    ]
+);
 
-    // Step 4: Add fields to the section you just created.
-    $page->add_field(
-        'api_key',                          // Unique ID for the field (used for saving/retrieving data)
-        'general_section',                  // The ID of the section this field belongs to
-        'password',                         // The field type
-        'Service API Key',                  // The label for the field
-        [                                   // An array of extra options
-            'description' => 'Enter your secret API key from your service dashboard.',
-            'html_attributes' => [
-                'placeholder' => 'sk_xxxxxxxxxxxx',
-            ],
-        ]
-    );
+$page->add_field(
+    'enable_caching',
+    'general_section',
+    'switch',                           // A modern toggle switch field type
+    'Enable Caching',
+    [
+        'description' => 'Improve performance by enabling the local cache.',
+        'default'     => true,          // Sets the default value if none is saved yet
+    ]
+);
 
-    $page->add_field(
-        'enable_caching',
-        'general_section',
-        'switch',                           // A modern toggle switch field type
-        'Enable Caching',
-        [
-            'description' => 'Improve performance by enabling the local cache.',
-            'default'     => true,          // Sets the default value if none is saved yet
-        ]
-    );
-
-    // Step 5: Finalize and register everything with WordPress.
-    // This is the most important step! It takes all your configuration and
-    // hooks it into the WordPress admin.
-    $page->init();
-}
-
-// We hook our function to 'admin_init', the standard hook for registering settings.
-add_action( 'admin_init', __NAMESPACE__ . '\my_plugin_register_settings_page' );
+// Step 5: Finalize and register everything with WordPress.
+// This is the most important step! It takes all your configuration and
+// hooks it into the WordPress admin.
+$page->init();
 ```
 
 ---

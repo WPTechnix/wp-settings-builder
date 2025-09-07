@@ -66,54 +66,50 @@ This example creates a settings page with three powerful fields and shows how to
 <?php
 use WPTechnix\WP_Settings_Builder\Settings_Builder;
 
-// Use a named function for better organization
-function my_plugin_settings_init() {
-    // 1. CREATE: Get a builder and create a page instance.
-    $page = ( new Settings_Builder() )->create( 'my_plugin_options', 'my-plugin-settings' );
+// 1. CREATE: Get a builder and create a page instance.
+$page = ( new Settings_Builder() )->create( 'my_plugin_options', 'my-plugin-settings' );
 
-    // 2. CONFIGURE: Define the page's location, sections, and fields.
-    $page->set_page_title( 'My Awesome Plugin Settings' )
-         ->set_menu_title( 'My Plugin' )
-         ->set_parent_slug( 'tools.php' ); // Places it under the "Tools" menu
+// 2. CONFIGURE: Define the page's location, sections, and fields.
+$page->set_page_title( 'My Awesome Plugin Settings' )
+        ->set_menu_title( 'My Plugin' )
+        ->set_parent_slug( 'tools.php' ); // Places it under the "Tools" menu
 
-    $page->add_section( 'api_section', 'API & General Configuration' );
+$page->add_section( 'api_section', 'API & General Configuration' );
 
-    $page->add_field( 
-        'api_key', 
-        'api_section',
-        'password', 
-        'Service API Key',
-        [
-            'description' => 'Your secret key is masked and protected.',
-        ]
-    );
+$page->add_field( 
+    'api_key', 
+    'api_section',
+    'password', 
+    'Service API Key',
+    [
+        'description' => 'Your secret key is masked and protected.',
+    ]
+);
 
-    $page->add_field( 
-        'enable_feature', 
-        'api_section', 
-        'switch', 
-        'Enable Awesome Feature',
-        [
-            'description' => 'Turn the main feature on or off.',
-            'default'     => true,
-        ]
-    );
+$page->add_field( 
+    'enable_feature', 
+    'api_section', 
+    'switch', 
+    'Enable Awesome Feature',
+    [
+        'description' => 'Turn the main feature on or off.',
+        'default'     => true,
+    ]
+);
 
-    $page->add_field( 
-        'featured_post', 
-        'api_section', 
-        'post', 
-        'Featured Post', 
-        [
-            'description' => 'Type to search for a post to feature on the homepage.',
-            'query_args'  => [ 'post_type' => 'post' ],
-        ]
-    );
+$page->add_field( 
+    'featured_post', 
+    'api_section', 
+    'post', 
+    'Featured Post', 
+    [
+        'description' => 'Type to search for a post to feature on the homepage.',
+        'query_args'  => [ 'post_type' => 'post' ],
+    ]
+);
 
-    // 3. INITIALIZE: Build the page and register all WordPress hooks.
-    $page->init();
-}
-add_action( 'admin_init', 'my_plugin_settings_init' );
+// 3. INITIALIZE: Build the page and register all WordPress hooks.
+$page->init();
 ```
 
 #### 2. Retrieve a Setting
