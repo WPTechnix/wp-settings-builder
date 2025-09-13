@@ -10,24 +10,20 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder;
 
 use InvalidArgumentException;
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 use WPTechnix\WP_Settings_Builder\Interfaces\Field_Factory_Interface;
 
 /**
  * Class Field_Factory
  *
  * Manages a registry of field types and instantiates them on demand.
- *
- * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 final class Field_Factory implements Field_Factory_Interface {
 
 	/**
 	 * A map of registered field types to their class names.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var array<non-empty-string, class-string<Abstract_Field>>
+	 * @var array<non-empty-string, class-string<Abstract_Field>>
 	 */
 	private array $fields = [];
 
@@ -36,6 +32,7 @@ final class Field_Factory implements Field_Factory_Interface {
 	 *
 	 * @throws InvalidArgumentException When invalid/non-existent field type is provided.
 	 */
+	#[\Override]
 	public function create( array $field_config ): Abstract_Field {
 		$field_type = $field_config['type'];
 
@@ -48,7 +45,9 @@ final class Field_Factory implements Field_Factory_Interface {
 	}
 
 	/**
-	 * {@inheritDoc}
+	 * Register a field class.
+	 *
+	 * @param class-string<Abstract_Field> $field_class The fully qualified class name of the field to register.
 	 *
 	 * @throws InvalidArgumentException If the provided class is not a valid field class.
 	 */
@@ -62,6 +61,7 @@ final class Field_Factory implements Field_Factory_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_registered_fields(): array {
 		return $this->fields;
 	}

@@ -12,22 +12,30 @@ namespace WPTechnix\WP_Settings_Builder\Fields\Traits;
 /**
  * Provides common functionality for fields using the Select2 library.
  *
- * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field
+ * @require-extends \WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field
+ * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 trait Has_Select2_Trait {
 
 	/**
-	 * {@inheritDoc}
+	 * Get the asset definitions for this field.
+	 *
+	 * @return array
+	 * @phpstan-return list<Asset>
+	 * @psalm-return list<Asset>
 	 */
+	#[\Override]
 	public static function get_asset_definitions(): array {
 		$base_url = 'https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/';
 
 		return [
 			[
-				'handle'  => 'select2-css',
-				'type'    => 'css',
-				'src'     => $base_url . 'css/select2.min.css',
-				'version' => '4.0.13',
+				'handle'       => 'select2-css',
+				'type'         => 'css',
+				'src'          => $base_url . 'css/select2.min.css',
+				'version'      => '4.0.13',
+				'dependencies' => [],
 			],
 			[
 				'handle'       => 'select2-js',
@@ -42,6 +50,7 @@ trait Has_Select2_Trait {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		return <<<'JS'
 jQuery(function($) {
@@ -61,6 +70,7 @@ JS;
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return <<<'CSS'
 /* Base container styles for both single and multi-select */

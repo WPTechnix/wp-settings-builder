@@ -2,33 +2,29 @@
 /**
  * Abstract base class for Term-related AJAX Select2 fields.
  *
- * @package WPTechnix\WP_Settings_Builder\Fields\Abstractions
- * @since 1.0.0
+ * @package WPTechnix\WP_Settings_Builder\Fields\Common
  */
 
 declare(strict_types=1);
 
-namespace WPTechnix\WP_Settings_Builder\Fields\Abstractions;
+namespace WPTechnix\WP_Settings_Builder\Fields\Common;
 
 /**
  * Provides the shared AJAX logic for querying WordPress terms.
- *
- * @since 1.0.0
  */
 abstract class Abstract_Term_Ajax_Field extends Abstract_Ajax_Select_Field {
 
 	/**
 	 * Primary AJAX action name for this field type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $primary_ajax_action = 'get_terms';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_ajax_actions(): array {
 		return [ self::get_ajax_action_name() => 'ajax_get_terms' ];
 	}
@@ -43,23 +39,28 @@ abstract class Abstract_Term_Ajax_Field extends Abstract_Ajax_Select_Field {
 	public static function ajax_get_terms(): void {
 		check_ajax_referer( 'wptx-ajax-select-' . self::get_ajax_action_name(), '_ajax_nonce' );
 
-		$search    = sanitize_text_field( wp_unslash( $_REQUEST['q'] ?? '' ) );
-		$page      = max( 1, absint( $_REQUEST['page'] ?? 1 ) );
+		$search    = isset( $_REQUEST['q'] ) && is_string( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '';
+		$page      = isset( $_REQUEST['page'] ) && is_numeric( $_REQUEST['page'] ) ? (int) max( 1, $_REQUEST['page'] ) : 1;
 		$user_args = isset( $_REQUEST['query_args'] ) && is_array( $_REQUEST['query_args'] ) ? $_REQUEST['query_args'] : [];
 
 		$default_args = [
 			'taxonomy'   => 'category',
 			'search'     => $search,
 			'number'     => 10,
-			'paged'      => $page,
 			'hide_empty' => false,
 		];
 
-		$query_args           = wp_parse_args( $user_args, $default_args );
-		$query_args['fields'] = 'id=>name'; // Must be id=>name for this implementation.
+		$query_args = wp_parse_args( $user_args, $default_args );
+		$query_args = array_merge(
+			$query_args,
+			[
+				'fields' => 'id=>name',
+				'offset' => ( $page - 1 ) * max( 0, intval( $query_args['number'] ) ),
+			]
+		);
 
 		$terms = get_terms( $query_args );
-		if ( is_wp_error( $terms ) ) {
+		if ( ! is_array( $terms ) ) {
 			wp_send_json_success(
 				[
 					'items' => [],
@@ -76,12 +77,12 @@ abstract class Abstract_Term_Ajax_Field extends Abstract_Ajax_Select_Field {
 			];
 		}
 
-		if ( isset( $query_args['taxonomy'] ) && is_string( $query_args['taxonomy'] ) ) {
-			$total_terms = get_terms( array_merge( $query_args, [ 'count' => true ] ) );
-			$total_terms = is_wp_error( $total_terms ) ? 0 : $total_terms;
-		} else {
-			$total_terms = 0;
-		}
+		$count_args = $query_args;
+		unset( $count_args['number'] );
+		unset( $count_args['offset'] );
+
+		$total_terms = wp_count_terms( $count_args );
+		$total_terms = is_numeric( $total_terms ) ? absint( $total_terms ) : 0;
 
 		$more = ( $page * $query_args['number'] ) < $total_terms;
 

@@ -5,11 +5,11 @@
  * @package WPTechnix\WP_Settings_Builder\Fields
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Term_Ajax_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Term_Ajax_Field;
 use WP_Term;
 
 /**
@@ -22,9 +22,7 @@ final class Terms_Field extends Abstract_Term_Ajax_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'terms';
 
@@ -40,19 +38,23 @@ final class Terms_Field extends Abstract_Term_Ajax_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	protected function get_initial_values(): array {
 		$term_ids = $this->get_value();
-		if ( empty( $term_ids ) || ! is_array( $term_ids ) ) {
+		if ( ! is_array( $term_ids ) || 0 === count( $term_ids ) ) {
 			return [];
 		}
 
 		$terms = get_terms(
 			[
-				'include'    => array_map( 'absint', $term_ids ),
+				'include'    => array_map( 'intval', $term_ids ),
 				'hide_empty' => false,
 				'orderby'    => 'include',
+				'fields'     => 'all',
 			]
 		);
+
+		/** @var array<int, WP_Term>|\WP_Error $terms */
 
 		return is_array( $terms ) ? array_values(
 			array_map(

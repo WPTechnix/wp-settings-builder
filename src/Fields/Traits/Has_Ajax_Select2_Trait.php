@@ -12,7 +12,7 @@ namespace WPTechnix\WP_Settings_Builder\Fields\Traits;
 /**
  * Provides common functionality for fields using the Select2 library with AJAX.
  *
- * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field
+ * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field
  */
 trait Has_Ajax_Select2_Trait {
 
@@ -21,6 +21,7 @@ trait Has_Ajax_Select2_Trait {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		// This JS is more complex as it handles AJAX, nonces, and passing query args.
 		return <<<'JS'
@@ -71,7 +72,7 @@ jQuery(function($) {
                 $select.append(option).trigger('change');
             }
         }
-        
+
         $select.select2(options);
     });
 });

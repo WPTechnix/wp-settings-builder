@@ -14,13 +14,20 @@ use DateTime;
 /**
  * Provides common functionality for fields using the Flatpickr library.
  *
- * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field
+ * @require-extends \WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field
+ * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 trait Has_Flatpickr_Trait {
 
 	/**
-	 * {@inheritDoc}
+	 * Get the asset definitions for this field.
+	 *
+	 * @return array
+	 * @phpstan-return list<Asset>
+	 * @psalm-return list<Asset>
 	 */
+	#[\Override]
 	public static function get_asset_definitions(): array {
 		$base_url        = 'https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/';
 		$themes_base_url = 'https://cdnjs.cloudflare.com/ajax/libs/flatpickr/4.6.13/themes/';
@@ -52,6 +59,7 @@ trait Has_Flatpickr_Trait {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return <<<'CSS'
 .wptx-date-picker,
@@ -71,19 +79,50 @@ CSS;
 	/**
 	 * Validates a date string against a given format.
 	 *
-	 * @param string $date_string The date string to validate.
-	 * @param string $format      The expected date format.
-	 *
-	 * @phpstan-param non-empty-string $format
+	 * @param mixed            $date_string The date string to validate.
+	 * @param non-empty-string $format      The expected date format.
 	 *
 	 * @return bool True if valid, false otherwise.
 	 */
-	private static function validate_date_string( string $date_string, string $format ): bool {
+	private static function validate_date_string( mixed $date_string, string $format ): bool {
+		if ( ! is_string( $date_string ) || '' === $date_string ) {
+			return false;
+		}
+
 		$date_object = DateTime::createFromFormat( $format, $date_string );
 
 		// The createFromFormat function can successfully parse invalid dates (e.g., 2023-02-31 becomes 2023-03-03).
 		// This check ensures that the parsed date, when re-formatted, matches the original input string.
-		return ! empty( $date_object ) && $date_object->format( $format ) === $date_string;
+		return $date_object instanceof DateTime && $date_object->format( $format ) === $date_string;
+	}
+
+	/**
+	 * Validates a time string against a given format.
+	 *
+	 * @param mixed            $time_string The time string to validate.
+	 * @param non-empty-string $format      The expected time format.
+	 *
+	 * @return bool True if valid, false otherwise.
+	 */
+	private function validate_time_string( mixed $time_string, string $format ): bool {
+		return is_string( $time_string ) && self::validate_date_string( gmdate( 'Y-m-d' ) . ' ' . $time_string, 'Y-m-d ' . $format );
+	}
+
+	/**
+	 * Validate a date range array against a given format.
+	 *
+	 * @param mixed            $date_range The date range array to validate.
+	 * @param non-empty-string $format The expected date format.
+	 *
+	 * @phpstan-assert array{0: non-empty-string, 1: non-empty-string} $date_range
+	 * @psalm-assert array{0: non-empty-string, 1: non-empty-string} $date_range
+	 */
+	private static function validate_date_range( mixed $date_range, string $format ): bool {
+
+		return is_array( $date_range ) &&
+				2 === count( $date_range ) &&
+				isset( $date_range[0] ) && self::validate_date_string( $date_range[0], $format ) &&
+				isset( $date_range[1] ) && self::validate_date_string( $date_range[1], $format );
 	}
 
 	/**

@@ -6,7 +6,7 @@
  * @package WPTechnix\WP_Settings_Builder\Fields\Traits
  */
 
-declare(strict_types=1);
+declare( strict_types=1 );
 
 namespace WPTechnix\WP_Settings_Builder\Fields\Traits;
 
@@ -16,16 +16,14 @@ use InvalidArgumentException;
  * Provides common functionality for fields that have a list of options,
  * like 'select' and 'radio'.
  *
- * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field
+ * @phpstan-require-extends \WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field
  */
 trait Has_Choices_Trait {
 
 	/**
 	 * Retrieves and validates the options array for the field.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return array<string|int, mixed>
+	 * @return array<array-key, mixed>
 	 *
 	 * @throws InvalidArgumentException If options are not a valid array.
 	 */
@@ -40,6 +38,7 @@ trait Has_Choices_Trait {
 				)
 			);
 		}
+
 		return $options;
 	}
 
@@ -55,11 +54,34 @@ trait Has_Choices_Trait {
 			return false;
 		}
 
+		$value = (string) $value;
+
 		try {
 			$options = $this->get_options();
-			return array_key_exists( (string) $value, $options );
+			return '' !== $value && array_key_exists( $value, $options );
 		} catch ( InvalidArgumentException ) {
 			return false;
 		}
+	}
+
+	/**
+	 * Filters an array to include only valid choices based on options.
+	 *
+	 * @param array<array-key, mixed> $items Array of values to validate.
+	 *
+	 * @return list<non-empty-string> Filtered list of valid string values.
+	 */
+	protected function filter_valid_choices( array $items ): array {
+		$options = $this->get_options();
+		$valid   = [];
+
+		foreach ( $items as $v ) {
+			$v = is_scalar( $v ) ? (string) $v : '';
+			if ( '' !== $v && isset( $options[ $v ] ) ) {
+				$valid[] = $v;
+			}
+		}
+
+		return $valid;
 	}
 }

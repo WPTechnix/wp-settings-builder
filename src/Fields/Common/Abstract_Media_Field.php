@@ -2,12 +2,12 @@
 /**
  * Abstract base class for fields using the WordPress Media Modal.
  *
- * @package WPTechnix\WP_Settings_Builder\Fields\Abstractions
+ * @package WPTechnix\WP_Settings_Builder\Fields\Common
  */
 
 declare(strict_types=1);
 
-namespace WPTechnix\WP_Settings_Builder\Fields\Abstractions;
+namespace WPTechnix\WP_Settings_Builder\Fields\Common;
 
 /**
  * Abstract_Media_Field
@@ -30,6 +30,7 @@ abstract class Abstract_Media_Field extends Abstract_Field {
 	 * All user-facing text and media library options are now configurable via the
 	 * 'media_settings' key in the field's 'extras' array.
 	 */
+	#[\Override]
 	public function render(): void {
 		$nonce       = wp_create_nonce( 'wptx_get_attachment_previews' );
 		$value       = $this->get_value();
@@ -42,6 +43,7 @@ abstract class Abstract_Media_Field extends Abstract_Field {
 			'library_type' => '', // Default to all media types.
 		];
 		$user_settings    = $this->get_extra( 'media_settings', [] );
+		$user_settings    = is_array( $user_settings ) ? $user_settings : [];
 		$settings         = wp_parse_args( $user_settings, $default_settings );
 
 		$wrapper_class = 'wptx-media-field-wrapper';
@@ -77,42 +79,62 @@ abstract class Abstract_Media_Field extends Abstract_Field {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
 	 */
-	public function get_value(): mixed {
-		$value = parent::get_value();
-		if ( $this->is_multiple ) {
-			return is_array( $value ) ? $value : null;
-		}
-		return is_scalar( $value ) ? $value : null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): mixed {
+	#[\Override]
+	public function get_default_value(): int|array|null {
 		$default_value = parent::get_default_value();
 		if ( $this->is_multiple ) {
-			return is_array( $default_value ) ? $default_value : null;
+			return is_array( $default_value ) ? $this->keep_valid_ids( $default_value ) : null;
 		}
-		return is_scalar( $default_value ) ? $default_value : null;
+		if ( is_numeric( $default_value ) ) {
+			$default_value = (int) $default_value;
+			return 0 < $default_value ? $default_value : null;
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
 	 */
-	public function sanitize( mixed $value ): mixed {
-		$input_value = is_string( $value ) ? explode( ',', $value ) : (array) $value;
-		$sanitized   = array_values( array_unique( array_filter( array_map( 'absint', $input_value ), fn( $v ) => 0 < $v ) ) );
-
+	#[\Override]
+	public function get_value(): int|array|null {
+		$value = parent::get_value();
 		if ( $this->is_multiple ) {
-			return $sanitized;
+			return is_array( $value ) ? $this->keep_valid_ids( $value ) : $this->get_default_value();
 		}
-		return $sanitized[0] ?? null;
+		if ( is_numeric( $value ) ) {
+			$value = (int) $value;
+			return 0 < $value ? $value : $this->get_default_value();
+		}
+		return $this->get_default_value();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
+	 */
+	#[\Override]
+	public function sanitize( mixed $value ): int|array|null {
+		$raw_ids = is_array( $value ) ? $value : ( is_scalar( $value ) ? explode( ',', (string) $value ) : null );
+		if ( is_array( $raw_ids ) ) {
+			$sanitized_ids = $this->keep_valid_ids( $raw_ids );
+			if ( $this->is_multiple ) {
+				return $sanitized_ids;
+			}
+			return $sanitized_ids[0];
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return true;
 	}
@@ -120,6 +142,7 @@ abstract class Abstract_Media_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return <<<'CSS'
 .wptx-media-field-wrapper {
@@ -183,6 +206,7 @@ CSS;
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		return <<<'JS'
 jQuery(function($) {
@@ -217,11 +241,11 @@ jQuery(function($) {
 			if (!isMultiple) {
 				currentIds = []; // For single selection, always replace the value.
 			}
-			
+
 			selection.each(function(attachment) {
 				currentIds.push(String(attachment.id));
 			});
-			
+
 			// Remove duplicates and any empty values that might have crept in.
 			const newIds = [...new Set(currentIds)].filter(id => id && id.length > 0);
 
@@ -280,6 +304,7 @@ JS;
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_ajax_actions(): array {
 		return [ 'get_attachment_previews' => 'ajax_get_attachment_previews' ];
 	}
@@ -290,18 +315,18 @@ JS;
 	public static function ajax_get_attachment_previews(): void {
 		check_ajax_referer( 'wptx_get_attachment_previews', '_ajax_nonce' );
 
-		if ( empty( $_POST['attachment_ids'] ) || ! is_array( $_POST['attachment_ids'] ) ) {
+		$attachment_ids = $_POST['attachment_ids'] ?? [];
+		if ( ! is_array( $attachment_ids ) || 0 === count( $attachment_ids ) ) {
 			wp_send_json_error( 'No attachment IDs provided.' );
 		}
 
-		$attachment_ids = ! empty( $_POST['attachment_ids'] ) && is_array( $_POST['attachment_ids'] ) ? $_POST['attachment_ids'] : [];
-		$attachment_ids = array_map( 'absint', $attachment_ids );
-		$html           = '';
+		$html = '';
 
 		foreach ( $attachment_ids as $id ) {
-			if ( empty( $id ) ) {
+			if ( ! is_numeric( $id ) ) {
 				continue;
 			}
+			$id              = abs( intval( $id ) );
 			$attachment_type = get_post_mime_type( $id );
 			$is_image        = is_string( $attachment_type ) && str_starts_with( $attachment_type, 'image' );
 			$preview_url     = (string) wp_get_attachment_image_url( $id, 'full', false );
@@ -310,7 +335,7 @@ JS;
 			$html .= sprintf( '<div class="wptx-media-preview-item" data-id="%d">', esc_attr( (string) $id ) );
 			$html .= '<a href="#" class="wptx-media-remove">&times;</a>';
 
-			if ( $is_image && ! empty( $preview_url ) ) {
+			if ( $is_image && '' !== $preview_url ) {
 				$html .= sprintf( '<img src="%s" alt="">', esc_url( $preview_url ) );
 			} else {
 				$html .= sprintf( '<img src="%s" alt="" class="is-icon">', esc_url( $icon_url ) );
@@ -318,5 +343,22 @@ JS;
 			$html .= '</div>';
 		}
 		wp_send_json_success( $html );
+	}
+
+	/**
+	 * Validates a list of media IDs and returns only those that are valid.
+	 *
+	 * @param array<array-key,mixed> $ids The list of media IDs to validate.
+	 * @return list<positive-int> The list of valid media IDs.
+	 */
+	protected function keep_valid_ids( array $ids ): array {
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( fn( $v ) => is_scalar( $v ) ? (int) $v : 0, $ids ),
+					fn( $id ) =>  0 < $id,
+				)
+			)
+		);
 	}
 }

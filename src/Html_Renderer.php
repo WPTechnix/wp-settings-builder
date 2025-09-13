@@ -19,6 +19,8 @@ use InvalidArgumentException;
  *
  * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 final class Html_Renderer implements Renderer_Interface {
 
@@ -35,24 +37,21 @@ final class Html_Renderer implements Renderer_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render_page( Page_Definition_Interface $definition ): void {
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html( $definition->get_page_title() ); ?></h1>
 
 			<?php
-
-			settings_errors();
-
 			$this->render_tabs( $definition );
 			?>
 
 			<form method="post" action="options.php" class="wptx-settings-form">
 				<?php
-
 				settings_fields( $definition->get_option_group() );
 
-				if ( ! empty( $definition->get_tabs() ) ) {
+				if ( 0 < count( $definition->get_tabs() ) ) {
 					$this->render_tabbed_sections( $definition );
 				} else {
 					do_settings_sections( $definition->get_page_slug() );
@@ -72,7 +71,7 @@ final class Html_Renderer implements Renderer_Interface {
 	 */
 	private function render_tabs( Page_Definition_Interface $definition ): void {
 		$tabs = $definition->get_tabs();
-		if ( empty( $tabs ) ) {
+		if ( 0 === count( $tabs ) ) {
 			return;
 		}
 
@@ -93,7 +92,7 @@ final class Html_Renderer implements Renderer_Interface {
 				$class = 'nav-tab' . ( $tab_id === $active_tab ? ' nav-tab-active' : '' );
 				?>
 				<a href="<?php echo esc_url( $url ); ?>" class="<?php echo esc_attr( $class ); ?>">
-					<?php if ( ! empty( $tab_config['icon'] ) ) : ?>
+					<?php if ( is_string( $tab_config['icon'] ) ) : ?>
 						<span class="dashicons <?php echo esc_attr( $tab_config['icon'] ); ?>"></span>
 					<?php endif; ?>
 					<?php echo esc_html( $tab_config['title'] ); ?>
@@ -119,26 +118,33 @@ final class Html_Renderer implements Renderer_Interface {
 
 		printf( '<input type="hidden" name="tab" value="%s">', esc_attr( (string) $active_tab ) );
 
-		if ( ! isset( $wp_settings_sections[ $page_slug ] ) ) {
+		if ( ! is_array( $wp_settings_sections ) || ! isset( $wp_settings_sections[ $page_slug ] ) || ! is_array( $wp_settings_sections[ $page_slug ] ) ) {
 			return;
 		}
 
-		foreach ( (array) $wp_settings_sections[ $page_slug ] as $section_id => $section ) {
-			$section_config = $definition->get_sections()[ $section_id ] ?? null;
+		$sections_config = $definition->get_sections();
 
-			if ( empty( $section_config ) || empty( $section_config['title'] ) || $active_tab !== $section_config['tab'] ) {
+		foreach ( $wp_settings_sections[ $page_slug ] as $section_id => $section ) {
+
+			/** @var string $section_id */
+
+			$section_config = $sections_config[ $section_id ] ?? null;
+
+			if (
+				! is_array( $section_config ) ||
+				null === $section_config['tab'] ||
+				$active_tab !== $section_config['tab']
+			) {
 				continue;
 			}
 
-			if ( ! empty( $section['title'] ) ) {
-				echo '<h2>' . esc_html( $section['title'] ) . '</h2>';
-			}
+			echo '<h2>' . esc_html( $section_config['title'] ) . '</h2>';
 
-			if ( ! empty( $section['callback'] ) && is_callable( $section['callback'] ) ) {
+			if ( is_array( $section ) && isset( $section['callback'] ) && is_callable( $section['callback'] ) ) {
 				call_user_func( $section['callback'], $section );
 			}
 
-			if ( ! empty( $wp_settings_fields[ $page_slug ][ $section_id ] ) ) {
+			if ( isset( $wp_settings_fields[ $page_slug ][ $section_id ] ) ) {
 				echo '<table class="form-table" role="presentation">';
 				do_settings_fields( $page_slug, $section_id );
 				echo '</table>';
@@ -149,15 +155,17 @@ final class Html_Renderer implements Renderer_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render_field( array $args ): void {
+
 		/** @var Field_Config|null $field_config */
 		$field_config = $args['config'] ?? null;
-		if ( empty( $field_config ) ) {
+		if ( ! is_array( $field_config ) ) {
 			return;
 		}
 
-		$conditions   = $field_config['extras']['conditions'] ?? null;
-		$wrapper_open = ! empty( $conditions ) && is_array( $conditions );
+		$conditions   = isset( $field_config['extras']['conditions'] ) && is_array( $field_config['extras']['conditions'] ) ? $field_config['extras']['conditions'] : [];
+		$wrapper_open = 0 < count( $conditions );
 
 		if ( $wrapper_open ) {
 			printf(
@@ -172,7 +180,7 @@ final class Html_Renderer implements Renderer_Interface {
 			$field_object->render();
 			if ( $field_object->should_render_description_below() ) {
 				$description = $field_object->get_description();
-				if ( ! empty( $description ) ) {
+				if ( '' !== $description ) {
 					echo '<p class="description">' . wp_kses_post( $description ) . '</p>';
 				}
 			}
@@ -188,28 +196,22 @@ final class Html_Renderer implements Renderer_Interface {
 	/**
 	 * Determines the current active tab.
 	 *
-	 * @param array $tabs The map of configured tabs.
-	 *
+	 * @param array[] $tabs The map of configured tabs.
 	 * @phpstan-param Tabs_Map $tabs
+	 * @psalm-param Tabs_Map $tabs
 	 *
-	 * @return string|null The active tab ID, or null if no tabs exist.
-	 *
-	 * @phpstan-return non-empty-string|null
+	 * @return non-empty-string|null The active tab ID, or null if no tabs exist.
 	 */
 	private function get_active_tab( array $tabs ): ?string {
-		if ( empty( $tabs ) ) {
+		if ( 0 === count( $tabs ) ) {
 			return null;
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification
-		$tab_from_request = $_GET['tab'] ?? null;
-
-		$active_tab = is_string( $tab_from_request ) ? sanitize_key( $tab_from_request ) : '';
-		if ( ! empty( $active_tab ) && array_key_exists( $active_tab, $tabs ) ) {
+		$active_tab = isset( $_REQUEST['tab'] ) && is_string( $_REQUEST['tab'] ) ? sanitize_key( $_REQUEST['tab'] ) : '';
+		if ( '' !== $active_tab && array_key_exists( $active_tab, $tabs ) ) {
 			return $active_tab;
 		}
-		$tab = array_key_first( $tabs );
-
-		return empty( $tab ) ? null : (string) $tab;
+		return array_key_first( $tabs );
 	}
 }

@@ -2,12 +2,12 @@
 /**
  * Provides the basic structure and common functionality for all field types.
  *
- * @package WPTechnix\WP_Settings_Builder\Fields\Abstractions
+ * @package WPTechnix\WP_Settings_Builder\Fields\Common
  */
 
 declare(strict_types=1);
 
-namespace WPTechnix\WP_Settings_Builder\Fields\Abstractions;
+namespace WPTechnix\WP_Settings_Builder\Fields\Common;
 
 use WPTechnix\WP_Settings_Builder\Interfaces\Field_Interface;
 use InvalidArgumentException;
@@ -15,50 +15,38 @@ use InvalidArgumentException;
 /**
  * Abstract field class to provide basic structure and common functionality.
  *
- * @phpstan-type Field_Config array{
- *   id: non-empty-string,
- *   title: non-empty-string,
- *   section: non-empty-string,
- *   name: non-empty-string,
- *   type: non-empty-string,
- *   extras: array<string,mixed>
- * }
+ * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 abstract class Abstract_Field implements Field_Interface {
 
 	/**
 	 * Field type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type;
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [];
+	protected static array $css_handles = [];
 
 	/**
 	 * JavaScript handles to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [];
+	protected static array $js_handles = [];
 
 	/**
 	 * Class Constructor.
 	 *
-	 * @param array $field_config  The field's config uration properties.
-	 *
+	 * @param array $field_config  The field's config array properties.
 	 * @phpstan-param Field_Config $field_config
+	 * @psalm-param Field_Config $field_config
 	 */
 	final public function __construct(
 		protected array $field_config,
@@ -68,6 +56,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_type(): string {
 		return static::$type;
 	}
@@ -75,6 +64,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_id(): string {
 		return $this->field_config['id'];
 	}
@@ -82,6 +72,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_name(): string {
 		return $this->field_config['name'];
 	}
@@ -89,6 +80,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_title(): string {
 		return $this->field_config['title'];
 	}
@@ -96,6 +88,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_section(): string {
 		return $this->field_config['section'];
 	}
@@ -103,6 +96,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_extra( string $key, mixed $default_value = null ): mixed {
 		return $this->field_config['extras'][ $key ] ?? $default_value;
 	}
@@ -110,6 +104,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_description(): string {
 		$description = $this->get_extra( 'description', '' );
 		return is_string( $description ) ? $description : '';
@@ -118,13 +113,15 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_default_value(): mixed {
-		return $this->get_extra( 'default', null );
+		return $this->get_extra( 'default' );
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function get_value(): mixed {
 		return $this->get_extra( 'value', $this->get_default_value() );
 	}
@@ -132,6 +129,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return false;
 	}
@@ -139,13 +137,15 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_render_description_below(): bool {
-		return ! empty( $this->get_description() );
+		return '' !== $this->get_description();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_asset_definitions(): array {
 		return [];
 	}
@@ -153,6 +153,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_enqueued_styles(): array {
 		return static::$css_handles;
 	}
@@ -160,6 +161,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_enqueued_scripts(): array {
 		return static::$js_handles;
 	}
@@ -167,6 +169,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return '';
 	}
@@ -174,6 +177,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		return '';
 	}
@@ -181,6 +185,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_ajax_actions(): array {
 		return [];
 	}
@@ -191,9 +196,7 @@ abstract class Abstract_Field implements Field_Interface {
 	 * This helper method constructs a valid HTML attribute string from an
 	 * associative array, with proper escaping.
 	 *
-	 * @param array $attributes The array of attributes (key => value).
-	 *
-	 * @phpstan-param array<non-empty-string, scalar> $attributes
+	 * @param array<array-key, mixed> $attributes The array of attributes (key => value).
 	 *
 	 * @return string The generated HTML attributes string.
 	 *
@@ -202,6 +205,7 @@ abstract class Abstract_Field implements Field_Interface {
 	protected function build_attributes_string( array $attributes ): string {
 		$attr_parts = [];
 		foreach ( $attributes as $key => $value ) {
+			$key = (string) $key;
 			if ( is_bool( $value ) ) {
 				if ( $value ) {
 					$attr_parts[] = esc_attr( $key );
@@ -222,9 +226,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * Get field extra HTML attributes.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return array<non-empty-string, scalar>
+	 * @return array<array-key,mixed>
 	 */
 	protected function get_extra_html_attributes(): array {
 		$field_attributes = $this->get_extra( 'html_attributes', [] );
@@ -234,9 +236,7 @@ abstract class Abstract_Field implements Field_Interface {
 	/**
 	 * Get field extra HTML attributes as string.
 	 *
-	 * @param array $default_attributes Additional attributes.
-	 *
-	 * @phpstan-param array<non-empty-string, scalar> $default_attributes
+	 * @param array<array-key,mixed> $default_attributes Additional attributes.
 	 *
 	 * @return string
 	 */

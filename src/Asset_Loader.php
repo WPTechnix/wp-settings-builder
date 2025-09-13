@@ -21,6 +21,8 @@ use InvalidArgumentException;
  *
  * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 final class Asset_Loader implements Asset_Loader_Interface {
 
@@ -42,15 +44,15 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	 * Asset Registry.
 	 *
 	 * @var array
-	 *
 	 * @phpstan-var array<string, Asset>
+	 * @psalm-var array<string, Asset>
 	 */
 	private static array $registry = [];
 
 	/**
 	 * An array of registered handles.
 	 *
-	 * @var string[]
+	 * @var list<string>
 	 */
 	private static array $registered_handles = [];
 
@@ -84,22 +86,18 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	}
 
 	/**
-	 * Register and enqueue assets in WP..
-	 *
-	 * @param Page_Definition_Interface $definition The page definition.
+	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function enqueue( Page_Definition_Interface $definition ): void {
 		$this->maybe_register_assets();
 
 		$fields = $definition->get_fields();
-		if ( empty( $fields ) ) {
+		if ( 0 === count( $fields ) ) {
 			return;
 		}
 
 		$active_field_types = array_values( array_unique( array_column( $fields, 'type' ) ) );
-		if ( empty( $active_field_types ) ) {
-			return;
-		}
 
 		$this->collect_and_enqueue_assets( $active_field_types, $fields );
 	}
@@ -109,8 +107,8 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	 *
 	 * @param array $asset    The asset to register.
 	 * @param bool  $override If true, the asset will be overridden if it already exists in the Loader.
-	 *
 	 * @phpstan-param Asset $asset
+	 * @psalm-param Asset $asset
 	 */
 	public static function add_registry( array $asset, bool $override = false ): void {
 		$handle = $asset['handle'];
@@ -146,11 +144,10 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	/**
 	 * Collects all required assets for the active field types and enqueues them.
 	 *
-	 * @param array $active_field_types A list of unique field types active on the page.
-	 * @param array $field_configs      A map of all field configurations on the page.
-	 *
-	 * @phpstan-param list<non-empty-string> $active_field_types
+	 * @param list<non-empty-string> $active_field_types A list of unique field types active on the page.
+	 * @param array                  $field_configs A map of all field configurations on the page.
 	 * @phpstan-param array<string, Field_Config> $field_configs
+	 * @psalm-param array<string, Field_Config> $field_configs
 	 */
 	private function collect_and_enqueue_assets( array $active_field_types, array $field_configs ): void {
 		$js_handles        = [];
@@ -171,19 +168,19 @@ final class Asset_Loader implements Asset_Loader_Interface {
 			$js_to_add  = trim( $class_name::get_js_contents() );
 
 			// Use a hash of the content as the key to prevent duplicates.
-			if ( ! empty( $css_to_add ) ) {
+			if ( '' !== $css_to_add ) {
 				$unique_inline_css[ md5( $css_to_add ) ] = $css_to_add;
 			}
-			if ( ! empty( $js_to_add ) ) {
+			if ( '' !== $js_to_add ) {
 				$unique_inline_js[ md5( $js_to_add ) ] = $js_to_add;
 			}
 		}
 
 		// Implode the unique values to create the final inline scripts and styles.
-		if ( ! empty( $unique_inline_css ) ) {
+		if ( 0 < count( $unique_inline_css ) ) {
 			$inline_css .= implode( "\n", $unique_inline_css );
 		}
-		if ( ! empty( $unique_inline_js ) ) {
+		if ( 0 < count( $unique_inline_js ) ) {
 			$inline_js .= implode( "\n", $unique_inline_js );
 		}
 
@@ -193,13 +190,9 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	/**
 	 * Gets the fully qualified class names for a list of field type identifiers.
 	 *
-	 * @param array $field_types A list of field type identifiers.
+	 * @param list<non-empty-string> $field_types A list of field type identifiers.
 	 *
-	 * @phpstan-param list<non-empty-string> $field_types
-	 *
-	 * @return array
-	 *
-	 * @phpstan-return list<class-string<Field_Interface>>
+	 * @return list<class-string<Field_Interface>>
 	 */
 	private function get_active_field_classes( array $field_types ): array {
 		$registered_fields = $this->field_factory->get_registered_fields();
@@ -217,25 +210,22 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	/**
 	 * Dispatches the collected assets to the WordPress enqueueing functions.
 	 *
-	 * @param array  $js_handles The script handles to enqueue.
-	 * @param array  $css_handles The style handles to enqueue.
-	 * @param string $inline_js The inline JavaScript to add.
-	 * @param string $inline_css The inline CSS to add.
-	 *
-	 * @phpstan-param list<non-empty-string> $js_handles
-	 * @phpstan-param list<non-empty-string> $css_handles
+	 * @param list<non-empty-string> $js_handles The script handles to enqueue.
+	 * @param list<non-empty-string> $css_handles The style handles to enqueue.
+	 * @param string                 $inline_js The inline JavaScript to add.
+	 * @param string                 $inline_css The inline CSS to add.
 	 */
 	private function dispatch_enqueue_calls( array $js_handles, array $css_handles, string $inline_js, string $inline_css ): void {
 
 		wp_enqueue_media();
 
 		wp_enqueue_script( self::MAIN_JS_HANDLE );
-		if ( ! empty( $inline_js ) ) {
+		if ( '' !== $inline_js ) {
 			wp_add_inline_script( self::MAIN_JS_HANDLE, $inline_js, 'after' );
 		}
 
 		wp_enqueue_style( self::MAIN_CSS_HANDLE );
-		if ( ! empty( $inline_css ) ) {
+		if ( '' !== $inline_css ) {
 			wp_add_inline_style( self::MAIN_CSS_HANDLE, $inline_css );
 		}
 
@@ -257,8 +247,8 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	 * multiple editors with different modes on the same page.
 	 *
 	 * @param array $field_configs The configurations for all fields on the page.
-	 *
 	 * @phpstan-param array<string, Field_Config> $field_configs
+	 * @psalm-param array<string, Field_Config> $field_configs
 	 */
 	private function enqueue_code_editors( array $field_configs ): void {
 		$code_editor_fields = [];
@@ -273,7 +263,7 @@ final class Asset_Loader implements Asset_Loader_Interface {
 			}
 		}
 
-		if ( empty( $code_editor_fields ) ) {
+		if ( 0 === count( $code_editor_fields ) ) {
 			return;
 		}
 
@@ -293,20 +283,22 @@ final class Asset_Loader implements Asset_Loader_Interface {
 
 				// The base settings are now correct. We only need to merge the user's custom settings.
 				// We target the 'codemirror' key specifically, as this is where user overrides belong.
-				if ( ! empty( $custom_settings ) && isset( $settings['codemirror'] ) ) {
+				if ( isset( $custom_settings ) && is_array( $custom_settings ) && isset( $settings['codemirror'] ) && is_array( $settings['codemirror'] ) ) {
 					$settings['codemirror'] = array_merge( $settings['codemirror'], $custom_settings );
 				}
+
+				$settings_json = wp_json_encode( $settings );
 
 				$init_scripts .= sprintf(
 					'wp.codeEditor.initialize( "%s", %s );',
 					$field->get_id(),
-					wp_json_encode( $settings )
+					is_string( $settings_json ) ? $settings_json : '{}'
 				);
 			}
 		}
 
 		// If any scripts were generated, add them to the page in a single inline script tag.
-		if ( ! empty( $init_scripts ) ) {
+		if ( '' !== $init_scripts ) {
 			wp_add_inline_script( 'code-editor', 'jQuery( function() { ' . $init_scripts . ' } );' );
 		}
 	}
@@ -314,7 +306,7 @@ final class Asset_Loader implements Asset_Loader_Interface {
 	/**
 	 * Returns the default inline JS.
 	 *
-	 * @return string
+	 * @return non-empty-string
 	 */
 	private function get_default_inline_js(): string {
 		return <<<'JS'
@@ -434,7 +426,7 @@ jQuery(function($) {
 
     // Run on page load to set the initial state.
     checkAllConditions();
-    
+
     // Trigger change on Select2 fields after they initialize to ensure correct state.
     setTimeout(function() {
         $('.wptx-select2-field, .wptx-multi-select2-field, .wptx-ajax-select2').trigger('change');
@@ -447,7 +439,7 @@ JS;
 		/**
 		 * Returns the default inline CSS with color variables for admin schemes.
 		 *
-		 * @return string
+		 * @return non-empty-string
 		 */
 	private function get_default_inline_css(): string {
 		return <<<'CSS'

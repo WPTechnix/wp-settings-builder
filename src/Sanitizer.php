@@ -22,6 +22,9 @@ use WPTechnix\WP_Settings_Builder\Interfaces\Sanitizer_Interface;
  * @phpstan-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 final class Sanitizer implements Sanitizer_Interface {
 
@@ -37,6 +40,7 @@ final class Sanitizer implements Sanitizer_Interface {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function sanitize( array $raw_input, Page_Definition_Interface $definition ): array {
 		$sanitized_values  = [];
 		$fields_to_process = $this->get_fields_to_process( $definition );
@@ -75,12 +79,12 @@ final class Sanitizer implements Sanitizer_Interface {
 	 * @param Page_Definition_Interface $definition The page definition.
 	 *
 	 * @return array
-	 *
 	 * @phpstan-return Fields_Map
+	 * @psalm-return Fields_Map
 	 */
 	private function get_fields_to_process( Page_Definition_Interface $definition ): array {
 		$tabs = $definition->get_tabs();
-		if ( empty( $tabs ) ) {
+		if ( 0 === count( $tabs ) ) {
 			return $definition->get_fields();
 		}
 
@@ -105,16 +109,14 @@ final class Sanitizer implements Sanitizer_Interface {
 	/**
 	 * Determines the current active tab from the request.
 	 *
-	 * @param array $tabs The map of configured tabs.
-	 *
+	 * @param array[] $tabs The map of configured tabs.
 	 * @phpstan-param Tabs_Map $tabs
+	 * @psalm-param Tabs_Map $tabs
 	 *
-	 * @return string|null The active tab ID, or null if no tabs exist.
-	 *
-	 * @phpstan-return non-empty-string|null
+	 * @return non-empty-string|null The active tab ID, or null if no tabs exist.
 	 */
 	private function get_active_tab( array $tabs ): ?string {
-		if ( empty( $tabs ) ) {
+		if ( 0 === count( $tabs ) ) {
 			return null;
 		}
 
@@ -122,7 +124,7 @@ final class Sanitizer implements Sanitizer_Interface {
 		$tab_from_request = $_POST['tab'] ?? null;
 
 		$active_tab = is_string( $tab_from_request ) ? sanitize_key( $tab_from_request ) : '';
-		if ( ! empty( $active_tab ) && array_key_exists( $active_tab, $tabs ) ) {
+		if ( '' !== $active_tab && array_key_exists( $active_tab, $tabs ) ) {
 			return $active_tab;
 		}
 		return array_key_first( $tabs );
@@ -131,13 +133,13 @@ final class Sanitizer implements Sanitizer_Interface {
 	/**
 	 * Executes a user-provided validation callback and handles errors.
 	 *
-	 * @param callable $callback The validation callback.
-	 * @param mixed    $raw_value The raw input value.
-	 * @param array    $field_config The field's configuration.
-	 * @param string   $option_group The option group name for add_settings_error.
+	 * @param callable         $callback The validation callback.
+	 * @param mixed            $raw_value The raw input value.
+	 * @param array            $field_config The field's configuration.
+	 * @param non-empty-string $option_group The option group name for add_settings_error.
 	 *
 	 * @phpstan-param Field_Config $field_config
-	 * @phpstan-param non-empty-string $option_group
+	 * @psalm-param Field_Config $field_config
 	 *
 	 * @return bool True if validation passes, false otherwise.
 	 */
@@ -147,7 +149,7 @@ final class Sanitizer implements Sanitizer_Interface {
 			if ( true === $result ) {
 				return true;
 			}
-			$error_message = is_string( $result ) && ! empty( $result ) ? $result : sprintf( 'Validation failed for the "%s" field.', $field_config['title'] );
+			$error_message = is_string( $result ) && '' !== $result ? $result : sprintf( 'Validation failed for the "%s" field.', $field_config['title'] );
 
 			add_settings_error( $option_group, 'validation_error_' . $field_config['id'], $error_message );
 			return false;

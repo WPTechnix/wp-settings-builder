@@ -26,10 +26,8 @@ interface Renderer_Interface {
 	 *
 	 * This method is designed to be used as a callback for WordPress's `add_settings_field`.
 	 *
-	 * @param array $args The arguments array passed by `do_settings_fields`.
-	 *                    It must contain a 'config' key with the Field_Config.
-	 *
-	 * @phpstan-param array<string, mixed> $args
+	 * @param array<string, mixed> $args The arguments array passed by `do_settings_fields`.
+	 *                                   It must contain a 'config' key with the Field_Config.
 	 */
 	public function render_field( array $args ): void;
 }

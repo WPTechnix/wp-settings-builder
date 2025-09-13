@@ -9,13 +9,12 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
+use InvalidArgumentException;
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Choices_Trait;
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Choice Field Class
- *
- * @phpstan-template Field_Type of non-empty-string = 'choice'
  */
 class Choice_Field extends Abstract_Field {
 
@@ -24,17 +23,16 @@ class Choice_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'choice';
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
+	 * @throws InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
+	#[\Override]
 	public function render(): void {
 		$options = $this->get_options();
 
@@ -43,8 +41,14 @@ class Choice_Field extends Abstract_Field {
 		$value = $this->get_value();
 
 		foreach ( $options as $option_value => $option_label ) {
+			if ( ! is_scalar( $option_label ) ) {
+				continue;
+			}
+			$option_label = (string) $option_label;
+			$option_value = (string) $option_value;
+
 			// Create a unique ID for each radio button for the label's 'for' attribute.
-			$radio_id = $this->get_id() . '_' . sanitize_key( (string) $option_value );
+			$radio_id = $this->get_id() . '_' . sanitize_key( $option_value );
 
 			$fields_html[] = sprintf(
 				// Wrap each radio button in its own label for better accessibility and layout control.
@@ -55,10 +59,10 @@ class Choice_Field extends Abstract_Field {
 				esc_attr( $radio_id ),
 				esc_attr( $radio_id ),
 				esc_attr( $this->get_name() ),
-				esc_attr( (string) $option_value ),
-				checked( $this->get_value(), (string) $option_value, false ),
+				esc_attr( $option_value ),
+				checked( $value, $option_value, false ),
 				$this->get_extra_html_attributes_string(), // phpcs:ignore WordPress.Security.EscapeOutput
-				esc_html( (string) $option_label )
+				esc_html( $option_label )
 			);
 		}
 
@@ -68,36 +72,40 @@ class Choice_Field extends Abstract_Field {
 
 	/**
 	 * {@inheritDoc}
-	 */
-	public function get_value(): ?string {
-		$value = parent::get_value();
-
-		return $this->is_valid_choice( $value ) ? (string) $value : null;
-	}
-
-	/**
-	 * {@inheritDoc}
 	 *
-	 * @return null|string
+	 * @return string
 	 */
-	public function get_default_value(): ?string {
+	#[\Override]
+	public function get_default_value(): string {
 		$default_value = parent::get_default_value();
-
-		return $this->is_valid_choice( $default_value ) ? (string) $default_value : null;
+		return is_string( $default_value ) && $this->is_valid_choice( $default_value ) ? $default_value : '';
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @return null|string
+	 * @return string
 	 */
-	public function sanitize( mixed $value ): ?string {
-		return $this->is_valid_choice( $value ) ? (string) $value : $this->get_default_value();
+	#[\Override]
+	public function get_value(): string {
+		$value = parent::get_value();
+		return is_string( $value ) && $this->is_valid_choice( $value ) ? $value : $this->get_default_value();
 	}
 
-		/**
-		 * {@inheritDoc}
-		 */
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string|null
+	 */
+	#[\Override]
+	public function sanitize( mixed $value ): ?string {
+		return is_string( $value ) && $this->is_valid_choice( $value ) ? $value : null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return <<<'CSS'
 .wptx-radio-label {

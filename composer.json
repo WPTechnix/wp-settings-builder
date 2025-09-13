@@ -23,13 +23,15 @@
         "php": ">=8.0"
     },
     "require-dev": {
+        "humanmade/psalm-plugin-wordpress": "^3.1",
         "phpcompatibility/php-compatibility": "*",
+        "phpcompatibility/phpcompatibility-wp": "^2",
         "phpstan/phpstan": "^2.1",
         "phpstan/phpstan-strict-rules": "^2.0",
         "squizlabs/php_codesniffer": "^3",
         "szepeviktor/phpstan-wordpress": "^2.0",
-        "wp-coding-standards/wpcs": "^3",
-        "phpcompatibility/phpcompatibility-wp": "^2"
+        "vimeo/psalm": "^6.13",
+        "wp-coding-standards/wpcs": "^3"
     },
     "autoload": {
         "psr-4": {
@@ -40,10 +42,12 @@
         "fix:phpcbf": "vendor/bin/phpcbf || true",
         "lint:phpcs": "vendor/bin/phpcs --report=full",
         "lint:phpstan": "vendor/bin/phpstan analyse --memory-limit=2G --error-format=table",
+        "lint:psalm": "vendor/bin/psalm --show-info=true --threads=8",
         "lint": [
             "@fix:phpcbf",
             "@lint:phpcs",
-            "@lint:phpstan"
+            "@lint:phpstan",
+            "@lint:psalm"
         ]
     },
     "config": {

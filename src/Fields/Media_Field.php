@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Media_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Media_Field;
 
 /**
  * Media_Field
@@ -21,9 +21,7 @@ final class Media_Field extends Abstract_Media_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'media';
 

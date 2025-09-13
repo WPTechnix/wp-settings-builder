@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Post_Ajax_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Post_Ajax_Field;
+use WP_Post;
 
 /**
  * Creates a Select2-based field for selecting a single post via AJAX.
@@ -21,9 +22,7 @@ final class Post_Field extends Abstract_Post_Ajax_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'post';
 
@@ -39,15 +38,16 @@ final class Post_Field extends Abstract_Post_Ajax_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	protected function get_initial_values(): array {
 		$post_id = $this->get_value();
 		if ( ! is_numeric( $post_id ) ) {
 			return [];
 		}
 
-		$post = get_post( absint( $post_id ) );
+		$post = get_post( intval( $post_id ) );
 
-		return ! empty( $post ) ? [
+		return $post instanceof WP_Post ? [
 			[
 				'id'   => $post->ID,
 				'text' => $post->post_title,
