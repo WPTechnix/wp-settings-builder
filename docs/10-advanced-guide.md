@@ -41,7 +41,7 @@ Create the basic class structure, extending `Abstract_Field`.
 <?php
 namespace MyAwesomePlugin\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 final class Star_Rating_Field extends Abstract_Field {
 

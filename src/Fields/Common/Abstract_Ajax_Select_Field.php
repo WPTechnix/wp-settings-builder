@@ -2,12 +2,12 @@
 /**
  * Abstract base class for AJAX-powered Select2 fields.
  *
- * @package WPTechnix\WP_Settings_Builder\Fields\Abstractions
+ * @package WPTechnix\WP_Settings_Builder\Fields\Common
  */
 
 declare(strict_types=1);
 
-namespace WPTechnix\WP_Settings_Builder\Fields\Abstractions;
+namespace WPTechnix\WP_Settings_Builder\Fields\Common;
 
 use InvalidArgumentException;
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Ajax_Select2_Trait;
@@ -22,29 +22,23 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 	/**
 	 * Primary AJAX action name for this field type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $primary_ajax_action = 'get_items';
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [ 'select2-css' ];
+	protected static array $css_handles = [ 'select2-css' ];
 
 	/**
 	 * JS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [ 'select2-js' ];
+	protected static array $js_handles = [ 'select2-js', 'select2-locale' ];
 
 	/**
 	 * Whether the field allows multiple selections.
@@ -60,12 +54,9 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 	 *
 	 * @throws InvalidArgumentException When primary AJAX action name is not defined.
 	 */
+	#[\Override]
 	public function render(): void {
 		$ajax_action = static::get_ajax_action_name();
-
-		if ( empty( $ajax_action ) ) {
-			throw new InvalidArgumentException( 'Primary AJAX action name is not defined.' );
-		}
 
 		$nonce          = wp_create_nonce( 'wptx-ajax-select-' . $ajax_action );
 		$query_args     = $this->get_extra( 'query_args', [] );
@@ -75,15 +66,13 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 			'class'           => 'regular-text wptx-ajax-select2',
 			'data-action'     => 'wptx_' . $ajax_action,
 			'data-nonce'      => $nonce,
-			'data-query-args' => wp_json_encode( $query_args ),
+			'data-query-args' => (string) wp_json_encode( $query_args ),
 		];
+
+		$field_name = $this->is_multiple ? $this->get_name() . '[]' : $this->get_name();
 
 		if ( $this->is_multiple ) {
 			$default_attributes['multiple'] = 'multiple';
-			$field_name                     = $this->get_name() . '[]';
-		} else {
-			$field_name                               = $this->get_name();
-			$default_attributes['data-initial-value'] = wp_json_encode( $initial_values[0] ?? null );
 		}
 
 		printf(
@@ -94,7 +83,7 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 		);
 
 		// For multiple-select fields, pre-populate the <option> tags.
-		if ( $this->is_multiple && ! empty( $initial_values ) ) {
+		if ( $this->is_multiple && 0 < count( $initial_values ) ) {
 			foreach ( $initial_values as $item ) {
 				printf(
 					'<option value="%s" selected="selected">%s</option>',
@@ -109,42 +98,61 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
 	 */
-	public function get_value(): mixed {
-		$value = parent::get_value();
-		if ( $this->is_multiple ) {
-			return is_array( $value ) ? $value : null;
-		}
-		return is_scalar( $value ) ? $value : null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): mixed {
+	#[\Override]
+	public function get_default_value(): int|array|null {
 		$default_value = parent::get_default_value();
 		if ( $this->is_multiple ) {
-			return is_array( $default_value ) ? $default_value : null;
+			return is_array( $default_value ) ? $this->keep_valid_ids( $default_value ) : [];
 		}
-		return is_scalar( $default_value ) ? $default_value : null;
+		if ( is_numeric( $default_value ) ) {
+			$default_value = (int) $default_value;
+			return 0 < $default_value ? $default_value : null;
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
 	 */
-	public function sanitize( mixed $value ): mixed {
+	#[\Override]
+	public function get_value(): int|array|null {
+		$value = parent::get_value();
 		if ( $this->is_multiple ) {
-			if ( ! is_array( $value ) ) {
-				return [];
-			}
-			return array_values( array_unique( array_map( 'absint', $value ) ) );
+			return is_array( $value ) ? $this->keep_valid_ids( $value ) : $this->get_default_value();
 		}
-		return ! empty( $value ) ? absint( $value ) : null;
+		if ( is_numeric( $value ) ) {
+			$value = (int) $value;
+			return 0 < $value ? $value : $this->get_default_value();
+		}
+		return $this->get_default_value();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return positive-int|list<positive-int>|null
+	 */
+	#[\Override]
+	public function sanitize( mixed $value ): int|array|null {
+		if ( $this->is_multiple ) {
+			return is_array( $value ) ? $this->keep_valid_ids( $value ) : null;
+		}
+		if ( is_numeric( $value ) ) {
+			$value = (int) $value;
+			return 0 < $value ? $value : null;
+		}
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return true;
 	}
@@ -154,20 +162,34 @@ abstract class Abstract_Ajax_Select_Field extends Abstract_Field {
 	 *
 	 * This must be implemented by the concrete child class.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return list<array{id: int, text: string}>
+	 * @return list<array{id: int, text: string}>
 	 */
 	abstract protected function get_initial_values(): array;
 
 	/**
 	 * Gets the primary AJAX action name for this field type.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	protected static function get_ajax_action_name(): string {
 		return static::$primary_ajax_action;
+	}
+
+	/**
+	 * Keeps only valid IDs in the given array.
+	 *
+	 * @param array<array-key,mixed> $ids Array of IDs.
+	 *
+	 * @return list<positive-int>
+	 */
+	private function keep_valid_ids( array $ids ): array {
+		return array_values(
+			array_unique(
+				array_filter(
+					array_map( fn( $v ) => is_scalar( $v ) ? (int) $v : 0, $ids ),
+					fn( $id ) =>  0 < $id,
+				)
+			)
+		);
 	}
 }

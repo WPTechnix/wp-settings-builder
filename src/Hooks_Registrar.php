@@ -28,7 +28,7 @@ final class Hooks_Registrar {
 	 *
 	 * @var string|false
 	 */
-	private $page_hook_suffix = false;
+	private string|false $page_hook_suffix = false;
 
 	/**
 	 * Class Constructor.
@@ -38,9 +38,7 @@ final class Hooks_Registrar {
 	 * @param Renderer_Interface        $renderer The service for HTML rendering.
 	 * @param Sanitizer_Interface       $sanitizer The service for data sanitization.
 	 * @param Asset_Loader_Interface    $asset_loader Asset Loader.
-	 * @param array                     $ajax_actions A map of AJAX action callbacks, keyed by action name.
-	 *
-	 * @phpstan-param array<string, callable> $ajax_actions
+	 * @param array<string,callable>    $ajax_actions A map of AJAX action callbacks, keyed by action name.
 	 */
 	public function __construct(
 		private Page_Definition_Interface $definition,
@@ -56,12 +54,13 @@ final class Hooks_Registrar {
 	 * Registers all necessary WordPress hooks.
 	 */
 	public function init(): void {
-		add_action( 'admin_menu', [ $this, 'register_admin_page' ] );
-		add_action( 'admin_init', [ $this, 'register_settings_api' ] );
+		add_action( 'admin_menu', [ $this, 'register_admin_page' ], 10, 0 );
+		add_action( 'admin_init', [ $this, 'register_settings_api' ], 10, 0 );
 		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 
 		foreach ( $this->ajax_actions as $action => $callback ) {
-			add_action( 'wp_ajax_wptx_' . $action, $callback );
+			/** @psalm-suppress  HookNotFound */
+			add_action( "wp_ajax_wptx_{$action}", $callback );
 		}
 	}
 
@@ -97,7 +96,7 @@ final class Hooks_Registrar {
 			add_settings_section(
 				$section_id,
 				$section['title'],
-				! empty( $section['description'] )
+				null !== $section['description']
 				? static function () use ( $section ) {
 					echo '<div>' . wp_kses_post( $section['description'] ) . '</div>';
 				}
@@ -112,6 +111,7 @@ final class Hooks_Registrar {
 			// Add the current value to the field's extras before passing it to the renderer.
 			$field_config['extras']['value'] = $current_values[ $field_id ] ?? null;
 
+			/** @psalm-suppress InvalidArgument */
 			add_settings_field(
 				$field_id,
 				$field_config['title'],
@@ -149,13 +149,11 @@ final class Hooks_Registrar {
 	/**
 	 * Top-level callback for sanitizing settings. It delegates to the sanitizer service.
 	 *
-	 * @internal
-	 *
 	 * @param mixed $input The raw input from the form submission.
 	 *
-	 * @return array The sanitized settings array.
+	 * @return array<array-key,mixed> The sanitized settings array.
 	 *
-	 * @phpstan-return array<string, mixed>
+	 * @internal
 	 */
 	public function sanitize_callback( mixed $input ): array {
 		$old_values = $this->persistence->load();

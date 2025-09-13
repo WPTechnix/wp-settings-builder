@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_User_Ajax_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_User_Ajax_Field;
 use WP_User;
 
 /**
@@ -22,9 +22,7 @@ final class Users_Field extends Abstract_User_Ajax_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'users';
 
@@ -40,13 +38,14 @@ final class Users_Field extends Abstract_User_Ajax_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	protected function get_initial_values(): array {
 		$user_ids = $this->get_value();
-		if ( empty( $user_ids ) || ! is_array( $user_ids ) ) {
+		if ( ! is_array( $user_ids ) || 0 === count( $user_ids ) ) {
 			return [];
 		}
 
-		$users = get_users( [ 'include' => array_map( 'absint', $user_ids ) ] );
+		$users = get_users( [ 'include' => array_map( 'intval', $user_ids ) ] );
 
 		return array_values(
 			array_map(

@@ -9,66 +9,56 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Interfaces;
 
+use InvalidArgumentException;
+
 /**
  * Interface Field_Interface
  *
  * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 interface Field_Interface {
-
 
 	/**
 	 * Get the unique type identifier for this field class.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public static function get_type(): string;
 
 	/**
 	 * Get the field's unique ID.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_id(): string;
 
 	/**
 	 * Get the field's HTML name attribute.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_name(): string;
 
 	/**
 	 * Get the field title.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_title(): string;
 
 	/**
 	 * Get the section ID the field belongs to.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_section(): string;
 
 	/**
 	 * Get a value from the field's extra data.
 	 *
-	 * @param string $key           The array key to retrieve.
-	 * @param mixed  $default_value The default value if the key is not found.
-	 *
-	 * @phpstan-param non-empty-string $key
+	 * @param non-empty-string $key           The array key to retrieve.
+	 * @param mixed            $default_value The default value if the key is not found.
 	 *
 	 * @return mixed
 	 */
@@ -89,9 +79,12 @@ interface Field_Interface {
 	public function get_default_value(): mixed;
 
 	/**
-	 * Get the stored value of the field.
+	 * Gets the value to display in the input field.
 	 *
-	 * @return mixed
+	 * Falls back to {@see Field_Interface::get_default_value()} if no value
+	 * has been set.
+	 *
+	 * @return mixed The stored or default field value.
 	 */
 	public function get_value(): mixed;
 
@@ -121,7 +114,7 @@ interface Field_Interface {
 	/**
 	 * Render the field's HTML markup to standard output.
 	 *
-	 * @throws \InvalidArgumentException When invalid HTML attributes provided.
+	 * @throws InvalidArgumentException When invalid attributes provided.
 	 */
 	public function render(): void;
 
@@ -129,26 +122,22 @@ interface Field_Interface {
 	 * Get the asset definitions for this field.
 	 *
 	 * @return array
-	 *
 	 * @phpstan-return list<Asset>
+	 * @psalm-return list<Asset>
 	 */
 	public static function get_asset_definitions(): array;
 
 	/**
 	 * Get enqueued styles for this field.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return list<non-empty-string>
+	 * @return list<non-empty-string>
 	 */
 	public static function get_enqueued_styles(): array;
 
 	/**
 	 * Get enqueued scripts for this field.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return list<non-empty-string>
+	 * @return list<non-empty-string>
 	 */
 	public static function get_enqueued_scripts(): array;
 
@@ -166,16 +155,13 @@ interface Field_Interface {
 	 */
 	public static function get_js_contents(): string;
 
-
 	/**
 	 * Get AJAX actions handled by this field.
 	 *
 	 * The key is the AJAX action name (without the 'wp_ajax_' prefix),
 	 * and the value is the static method name in the class to handle it.
 	 *
-	 * @return array
-	 *
-	 * @phpstan-return array<non-empty-string, non-empty-string>
+	 * @return array<non-empty-string, non-empty-string>
 	 */
 	public static function get_ajax_actions(): array;
 }

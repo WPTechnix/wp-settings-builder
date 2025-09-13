@@ -19,69 +19,58 @@ namespace WPTechnix\WP_Settings_Builder\Interfaces;
  * @phpstan-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Sections_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  * @phpstan-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Tabs_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Sections_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Fields_Map from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 interface Page_Definition_Interface {
 
 	/**
 	 * Get option name
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_option_name(): string;
 
 	/**
 	 * Get option group
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_option_group(): string;
 
 	/**
 	 * Get page slug
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_page_slug(): string;
 
 	/**
 	 * Get page title
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_page_title(): string;
 
 	/**
 	 * Get menu title
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_menu_title(): string;
 
 	/**
 	 * Get capability
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_capability(): string;
 
 	/**
 	 * Get parent slug
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	public function get_parent_slug(): string;
 
@@ -89,8 +78,8 @@ interface Page_Definition_Interface {
 	 * Get Tabs
 	 *
 	 * @return array
-	 *
 	 * @phpstan-return Tabs_Map
+	 * @psalm-return Tabs_Map
 	 */
 	public function get_tabs(): array;
 
@@ -98,17 +87,34 @@ interface Page_Definition_Interface {
 	 * Get sections
 	 *
 	 * @return array
-	 *
 	 * @phpstan-return Sections_Map
+	 * @psalm-return Sections_Map
 	 */
 	public function get_sections(): array;
 
 	/**
 	 * Get Fields
 	 *
-	 * @return array
-	 *
+	 * @return array[]
 	 * @phpstan-return Fields_Map
+	 * @psalm-return Fields_Map
 	 */
 	public function get_fields(): array;
+
+	/**
+	 * Determines the current active tab from the request.
+	 *
+	 * @return non-empty-string|false The active tab ID, or false if no tabs exist.
+	 */
+	public function get_active_tab(): string|false;
+
+	/**
+	 * Retrieve the configuration for all fields belongs to
+	 * the current page or tab.
+	 *
+	 * @return array[]
+	 * @phpstan-return Fields_Map
+	 * @psalm-return Fields_Map
+	 */
+	public function get_active_fields(): array;
 }

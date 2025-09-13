@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Creates a WordPress WYSIWYG (TinyMCE) editor field.
@@ -21,17 +21,17 @@ final class Wysiwyg_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'wysiwyg';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 		$settings = $this->get_extra( 'editor_settings', [] );
+		$settings = is_array( $settings ) ? $settings : [];
 
 		$default_settings = [
 			'textarea_name' => $this->get_name(),
@@ -42,7 +42,7 @@ final class Wysiwyg_Field extends Abstract_Field {
 
 		// The wp_editor function echoes its output directly.
 		ob_start();
-		wp_editor( (string) $this->get_value(), $this->get_id(), $editor_settings );
+		wp_editor( $this->get_value(), $this->get_id(), $editor_settings );
 		$editor_contents = ob_get_clean();
 
 		// The output from wp_editor is complex HTML and is considered safe.
@@ -52,8 +52,33 @@ final class Wysiwyg_Field extends Abstract_Field {
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return string
 	 */
-	public function sanitize( mixed $value ): string {
-		return wp_kses_post( (string) $value );
+	#[\Override]
+	public function get_default_value(): string {
+		$default_value = parent::get_default_value();
+		return is_string( $default_value ) ? $default_value : '';
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string
+	 */
+	#[\Override]
+	public function get_value(): string {
+		$value = parent::get_value();
+		return is_string( $value ) ? $value : $this->get_default_value();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string|null
+	 */
+	#[\Override]
+	public function sanitize( mixed $value ): ?string {
+		return is_string( $value ) ? $value : null;
 	}
 }

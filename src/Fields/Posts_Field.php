@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Post_Ajax_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Post_Ajax_Field;
 use WP_Post;
 
 /**
@@ -22,9 +22,7 @@ final class Posts_Field extends Abstract_Post_Ajax_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'posts';
 
@@ -40,15 +38,16 @@ final class Posts_Field extends Abstract_Post_Ajax_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	protected function get_initial_values(): array {
 		$post_ids = $this->get_value();
-		if ( empty( $post_ids ) || ! is_array( $post_ids ) ) {
+		if ( ! is_array( $post_ids ) || 0 === count( $post_ids ) ) {
 			return [];
 		}
 
 		$posts = get_posts(
 			[
-				'post__in'    => array_map( 'absint', $post_ids ),
+				'post__in'    => array_map( 'intval', $post_ids ),
 				'post_type'   => 'any',
 				'numberposts' => -1,
 				'orderby'     => 'post__in',

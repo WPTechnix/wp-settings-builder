@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Flatpickr_Trait;
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Date Field Class
@@ -24,30 +24,23 @@ final class Date_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'date';
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [ 'flatpickr-css', 'flatpickr-airbnb-css' ];
+	protected static array $css_handles = [ 'flatpickr-css', 'flatpickr-airbnb-css' ];
 
 	/**
 	 * JS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [ 'flatpickr-js' ];
-
+	protected static array $js_handles = [ 'flatpickr-js', 'flatpickr-locale' ];
 
 	/**
 	 * The standardized format for database storage.
@@ -66,6 +59,7 @@ final class Date_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 		$php_display_format = $this->get_display_format();
 
@@ -76,7 +70,13 @@ final class Date_Field extends Abstract_Field {
 			'disableMobile' => true,
 		];
 
+		$locale = self::get_flatpickr_locale();
+		if ( false !== $locale ) {
+			$base_options['locale'] = $locale;
+		}
+
 		$user_options   = $this->get_extra( 'flatpickr_options', [] );
+		$user_options   = is_array( $user_options ) ? $user_options : [];
 		$merged_options = array_merge( $user_options, $base_options );
 
 		$default_attributes = [
@@ -88,7 +88,7 @@ final class Date_Field extends Abstract_Field {
 			'<input type="text" id="%s" name="%s" value="%s" %s />',
 			esc_attr( $this->get_id() ),
 			esc_attr( $this->get_name() ),
-			esc_attr( (string) $this->get_value() ),
+			esc_attr( $this->get_value() ),
 			$this->get_extra_html_attributes_string( $default_attributes ) // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 	}
@@ -96,6 +96,7 @@ final class Date_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		return <<<'JS'
 jQuery(function($) {
@@ -111,45 +112,49 @@ JS;
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return string
 	 */
-	public function get_value(): ?string {
-		$value = parent::get_value();
-		return is_scalar( $value ) ? (string) $value : null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): ?string {
+	#[\Override]
+	public function get_default_value(): string {
 		$default_value = parent::get_default_value();
-
-		return is_scalar( $default_value ) ? (string) $default_value : null;
+		return is_string( $default_value ) ? $default_value : '';
 	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return string
 	 */
+	#[\Override]
+	public function get_value(): string {
+		$value = parent::get_value();
+		return is_string( $value ) ? $value : $this->get_default_value();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string|null
+	 */
+	#[\Override]
 	public function sanitize( mixed $value ): ?string {
 		if ( ! is_string( $value ) ) {
-			return $this->get_default_value();
+			return null;
 		}
 
 		$trimmed_value = trim( $value );
-
-		if ( '' === $trimmed_value ) {
-			return '';
-		}
-
 		if ( self::validate_date_string( $trimmed_value, self::STORAGE_FORMAT ) ) {
 			return $trimmed_value;
 		}
 
-		return $this->get_default_value();
+		return null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return true;
 	}
@@ -157,13 +162,11 @@ JS;
 	/**
 	 * Gets the display format from extras, with a fallback to the default.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	private function get_display_format(): string {
 		$format = $this->get_extra( 'display_format' );
-		if ( is_string( $format ) && ! empty( $format ) ) {
+		if ( is_string( $format ) && '' !== $format ) {
 			return $format;
 		}
 		return self::DEFAULT_DISPLAY_FORMAT;

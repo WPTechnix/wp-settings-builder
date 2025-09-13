@@ -15,6 +15,7 @@ use InvalidArgumentException;
  * Interface Field_Factory_Interface
  *
  * @phpstan-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-import-type Field_Config from \WPTechnix\WP_Settings_Builder\Internal\Types
  */
 interface Field_Factory_Interface {
 
@@ -22,8 +23,8 @@ interface Field_Factory_Interface {
 	 * Creates a field object instance from its configuration.
 	 *
 	 * @param array $field_config The configuration array for the field.
-	 *
 	 * @phpstan-param Field_Config $field_config
+	 * @psalm-param Field_Config $field_config
 	 *
 	 * @return Field_Interface The instantiated field object.
 	 *
@@ -34,9 +35,7 @@ interface Field_Factory_Interface {
 	/**
 	 * Retrieves a map of all registered field types and their corresponding class names.
 	 *
-	 * @return array A map of field types to their corresponding class names.
-	 *
-	 * @phpstan-return array<non-empty-string, class-string<Field_Interface>>
+	 * @return array<non-empty-string, class-string<Field_Interface>> A map of field types to their corresponding class names.
 	 */
 	public function get_registered_fields(): array;
 }

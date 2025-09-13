@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Text Field Class
@@ -19,15 +19,14 @@ class Text_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'text';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 		$this->render_field( 'text' );
 	}
@@ -35,9 +34,7 @@ class Text_Field extends Abstract_Field {
 	/**
 	 * Renders the field.
 	 *
-	 * @param string $type The type of input field to render.
-	 *
-	 * @phpstan-param non-empty-string $type
+	 * @param non-empty-string $type The type of input field to render.
 	 */
 	public function render_field( string $type ): void {
 		printf(
@@ -45,36 +42,41 @@ class Text_Field extends Abstract_Field {
 			esc_attr( $type ),
 			esc_attr( $this->get_id() ),
 			esc_attr( $this->get_name() ),
-			esc_attr( (string) $this->get_value() ),
+			esc_attr( $this->get_value() ),
 			$this->get_extra_html_attributes_string( [ 'class' => 'regular-text' ] ) // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return string
 	 */
-	public function get_value(): ?string {
-		$value = parent::get_value();
-		return is_scalar( $value ) ? (string) $value : null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): ?string {
+	#[\Override]
+	public function get_default_value(): string {
 		$default_value = parent::get_default_value();
-		return is_scalar( $default_value ) ? (string) $default_value : null;
+		return is_scalar( $default_value ) ? (string) $default_value : '';
 	}
 
 	/**
 	 * {@inheritDoc}
+	 *
+	 * @return string
 	 */
+	#[\Override]
+	public function get_value(): string {
+		$value = parent::get_value();
+		return is_scalar( $value ) ? (string) $value : $this->get_default_value();
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return string|null
+	 */
+	#[\Override]
 	public function sanitize( mixed $value ): ?string {
-
-		$default_value     = $this->get_default_value();
-		$sanitized_default = is_string( $default_value ) ? sanitize_text_field( $default_value ) : null;
-
-		return is_scalar( $value ) ? sanitize_text_field( (string) $value ) : $sanitized_default;
+		return is_scalar( $value ) ? sanitize_email( (string) $value ) : null;
 	}
 
 	/**
@@ -82,6 +84,7 @@ class Text_Field extends Abstract_Field {
 	 *
 	 * @return bool
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return true;
 	}

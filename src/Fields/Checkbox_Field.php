@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Checkbox Field Class
@@ -19,15 +19,14 @@ class Checkbox_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'checkbox';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 
 		$description = $this->get_description();
@@ -43,7 +42,7 @@ class Checkbox_Field extends Abstract_Field {
 			$this->get_extra_html_attributes_string() // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 
-		if ( ! empty( $description ) ) {
+		if ( '' !== $description ) {
 			// If a description exists, wrap the input and the description in a <label>.
 			// This makes the description text itself clickable, improving UX.
 			printf(
@@ -60,51 +59,36 @@ class Checkbox_Field extends Abstract_Field {
 	}
 
 	/**
-	 * Cast a value to a boolean.
+	 * {@inheritDoc}
 	 *
-	 * @param mixed $value The value to cast.
+	 * @return bool
+	 */
+	#[\Override]
+	public function get_value(): bool {
+		$value = $this->cast_checkbox_value( parent::get_value() );
+		return null === $value ? $this->get_default_value() : $value;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return bool
+	 */
+	#[\Override]
+	public function get_default_value(): bool {
+		$value = $this->cast_checkbox_value( parent::get_default_value() );
+		return null === $value ? false : $value;
+	}
+
+	/**
+	 * {@inheritDoc}
 	 *
 	 * @return bool|null
 	 */
-	private function cast_value_to_bool( mixed $value ): ?bool {
-		if ( null === $value ) {
-			return null;
-		}
-		if ( is_bool( $value ) ) {
-			return $value;
-		}
-		return is_scalar( $value ) && '1' === (string) $value;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_value(): ?bool {
-		return $this->cast_value_to_bool( parent::get_value() );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function get_default_value(): ?bool {
-		return $this->cast_value_to_bool( parent::get_default_value() );
-	}
-
-	/**
-	 * {@inheritDoc}
-	 */
-	public function sanitize( mixed $value ): mixed {
-		if ( null === $value ) {
-			return null;
-		}
-		if ( is_bool( $value ) ) {
-			return $value;
-		}
-		if ( is_scalar( $value ) ) {
-			return '1' === (string) $value;
-		}
-
-		return false;
+	#[\Override]
+	public function sanitize( mixed $value ): ?bool {
+		$value = $this->cast_checkbox_value( $value );
+		return null === $value ? false : $value;
 	}
 
 	/**
@@ -112,14 +96,33 @@ class Checkbox_Field extends Abstract_Field {
 	 *
 	 * @return bool
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
-		return empty( $this->get_description() );
+		return '' === $this->get_description();
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_render_description_below(): bool {
 		return false;
+	}
+
+	/**
+	 * Cast a value to a boolean if not null.
+	 *
+	 * @param mixed $value The value to cast.
+	 *
+	 * @return bool|null
+	 */
+	private function cast_checkbox_value( mixed $value ): ?bool {
+		if ( null === $value ) {
+			return null;
+		}
+		if ( is_bool( $value ) ) {
+			return $value;
+		}
+		return is_scalar( $value ) && '1' === (string) $value;
 	}
 }

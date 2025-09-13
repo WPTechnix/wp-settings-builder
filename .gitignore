@@ -16,6 +16,9 @@ phpcs.xml
 # PHPStan
 phpstan.neon
 
+# PSalm
+psalm.xml
+
 # IDE
 /.idea/
 /.vscode/

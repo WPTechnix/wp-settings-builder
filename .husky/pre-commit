@@ -44,6 +44,9 @@ $COMPOSER_CMD lint:phpcs
 echo "Running phpstan..."
 $COMPOSER_CMD lint:phpstan
 
+echo "Running psalm..."
+$COMPOSER_CMD lint:psalm
+
 echo "✅ Pre-commit checks passed."
 
 exit 0

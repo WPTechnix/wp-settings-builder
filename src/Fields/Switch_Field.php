@@ -19,15 +19,14 @@ final class Switch_Field extends Checkbox_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'switch';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 		$description = $this->get_description();
 
@@ -45,7 +44,7 @@ final class Switch_Field extends Checkbox_Field {
 			$this->get_extra_html_attributes_string(), // phpcs:ignore WordPress.Security.EscapeOutput
 		);
 
-		if ( ! empty( $description ) ) {
+		if ( '' !== $description ) {
 			// If a description exists, wrap the toggle and the description in a <label>.
 			// This makes the description text itself clickable.
 			printf(
@@ -64,6 +63,7 @@ final class Switch_Field extends Checkbox_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_css_contents(): string {
 		return <<<'CSS'
 .wptx-switch-label {
@@ -80,7 +80,7 @@ final class Switch_Field extends Checkbox_Field {
 	width: 45px;
 	height: 24px;
 	flex-shrink: 0;
-	margin-right: 0.875em;
+	margin-inline-end: 0.875em;
 }
 .wptx-switch input {
 	opacity: 0;

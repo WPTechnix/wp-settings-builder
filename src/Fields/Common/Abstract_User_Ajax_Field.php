@@ -2,12 +2,12 @@
 /**
  * Abstract base class for User-related AJAX Select2 fields.
  *
- * @package WPTechnix\WP_Settings_Builder\Fields\Abstractions
+ * @package WPTechnix\WP_Settings_Builder\Fields\Common
  */
 
 declare(strict_types=1);
 
-namespace WPTechnix\WP_Settings_Builder\Fields\Abstractions;
+namespace WPTechnix\WP_Settings_Builder\Fields\Common;
 
 use WP_User;
 use WP_User_Query;
@@ -20,15 +20,14 @@ abstract class Abstract_User_Ajax_Field extends Abstract_Ajax_Select_Field {
 	/**
 	 * Primary AJAX action name for this field type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $primary_ajax_action = 'get_users';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_ajax_actions(): array {
 		return [ self::get_ajax_action_name() => 'ajax_get_users' ];
 	}
@@ -43,8 +42,8 @@ abstract class Abstract_User_Ajax_Field extends Abstract_Ajax_Select_Field {
 	public static function ajax_get_users(): void {
 		check_ajax_referer( 'wptx-ajax-select-' . self::get_ajax_action_name(), '_ajax_nonce' );
 
-		$search    = sanitize_text_field( wp_unslash( $_REQUEST['q'] ?? '' ) );
-		$page      = max( 1, absint( $_REQUEST['page'] ?? 1 ) );
+		$search    = isset( $_REQUEST['q'] ) && is_string( $_REQUEST['q'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['q'] ) ) : '';
+		$page      = isset( $_REQUEST['page'] ) && is_numeric( $_REQUEST['page'] ) ? (int) max( 1, $_REQUEST['page'] ) : 1;
 		$user_args = isset( $_REQUEST['query_args'] ) && is_array( $_REQUEST['query_args'] ) ? $_REQUEST['query_args'] : [];
 
 		$default_args = [
@@ -90,11 +89,11 @@ abstract class Abstract_User_Ajax_Field extends Abstract_Ajax_Select_Field {
 	protected static function user_display_name( WP_User $user ): string {
 		$display_name = $user->display_name;
 
-		if ( empty( $display_name ) ) {
+		if ( '' === trim( $display_name ) ) {
 			$display_name = trim( sprintf( '%s %s', $user->first_name, $user->last_name ) );
 		}
 
-		if ( empty( $display_name ) ) {
+		if ( '' === $display_name ) {
 			$display_name = $user->user_login;
 		}
 

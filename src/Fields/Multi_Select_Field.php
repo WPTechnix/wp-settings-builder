@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
+use InvalidArgumentException;
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Select2_Trait;
 
 /**
@@ -21,35 +22,30 @@ final class Multi_Select_Field extends Multi_Check_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'multi_select';
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [ 'select2-css' ];
+	protected static array $css_handles = [ 'select2-css' ];
 
 	/**
 	 * JS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [ 'select2-js' ];
+	protected static array $js_handles = [ 'select2-js', 'select2-locale' ];
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
+	 * @throws InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
+	#[\Override]
 	public function render(): void {
 		$options          = $this->get_options();
 		$current_values   = $this->get_value();
@@ -57,12 +53,18 @@ final class Multi_Select_Field extends Multi_Check_Field {
 
 		$option_elements = [];
 		foreach ( $options as $option_value => $option_label ) {
-			$is_selected       = in_array( (string) $option_value, $current_values, true );
+			if ( ! is_scalar( $option_label ) ) {
+				continue;
+			}
+			$option_label = (string) $option_label;
+			$option_value = (string) $option_value;
+
+			$is_selected       = in_array( $option_value, $current_values, true );
 			$option_elements[] = sprintf(
 				'<option value="%s" %s>%s</option>',
-				esc_attr( (string) $option_value ),
+				esc_attr( $option_value ),
 				selected( true, $is_selected, false ),
-				esc_html( (string) $option_label )
+				esc_html( $option_label )
 			);
 		}
 

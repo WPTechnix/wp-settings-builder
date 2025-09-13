@@ -46,7 +46,7 @@ concurrency:
 jobs:
   # PHPCS - Test with both minimum and maximum PHP versions
   # This ensures coding standards work with different dependency versions
-  lint:
+  phpcs:
     name: Code Style (PHP ${{ matrix.php-version }})
     runs-on: ubuntu-latest
     strategy:
@@ -106,8 +106,40 @@ jobs:
         if: github.event_name != 'pull_request'
         run: ./vendor/bin/phpcs --no-cache
 
+  # Psalm - Run on highest PHP version for maximum coverage
+  psalm:
+    name: Static Analysis (Psalm)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.4
+          tools: composer
+          coverage: none
+
+      - name: Get Composer cache directory
+        id: composer-cache
+        run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.composer-cache.outputs.dir }}
+          key: ${{ runner.os }}-php8.4-composer-${{ hashFiles('**/composer.json') }}
+          restore-keys: ${{ runner.os }}-php8.4-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Run Psalm
+        run: ./vendor/bin/psalm --output-format=github --config=psalm.xml.dist --show-info=true --no-cache
+
   # PHPStan - Run on highest PHP version for maximum coverage
-  static-analysis:
+  phpstan:
     name: Static Analysis (PHPStan)
     runs-on: ubuntu-latest
     steps:

@@ -9,7 +9,8 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Term_Ajax_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Term_Ajax_Field;
+use WP_Term;
 
 /**
  * Creates a Select2-based field for selecting a single term via AJAX.
@@ -21,9 +22,7 @@ final class Term_Field extends Abstract_Term_Ajax_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'term';
 
@@ -39,15 +38,16 @@ final class Term_Field extends Abstract_Term_Ajax_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	protected function get_initial_values(): array {
 		$term_id = $this->get_value();
 		if ( ! is_numeric( $term_id ) ) {
 			return [];
 		}
 
-		$term = get_term( absint( $term_id ) );
+		$term = get_term( intval( $term_id ) );
 
-		return ! empty( $term ) && ! is_wp_error( $term ) ? [
+		return $term instanceof WP_Term ? [
 			[
 				'id'   => $term->term_id,
 				'text' => $term->name,

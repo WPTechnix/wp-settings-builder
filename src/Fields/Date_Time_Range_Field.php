@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Flatpickr_Trait;
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Date Time Range Field Class
@@ -24,30 +24,23 @@ final class Date_Time_Range_Field extends Abstract_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'date_time_range';
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [ 'flatpickr-css', 'flatpickr-airbnb-css' ];
+	protected static array $css_handles = [ 'flatpickr-css', 'flatpickr-airbnb-css' ];
 
 	/**
 	 * JS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [ 'flatpickr-js' ];
-
+	protected static array $js_handles = [ 'flatpickr-js', 'flatpickr-locale' ];
 
 	/**
 	 * The standardized format for database storage.
@@ -66,11 +59,11 @@ final class Date_Time_Range_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
 		$php_display_format = $this->get_display_format();
 		$js_display_format  = self::translate_php_to_flatpickr_format( $php_display_format );
-		$storage_value      = $this->get_value();
-		$default_date       = wp_json_encode( $storage_value );
+		$js_date            = (string) wp_json_encode( $this->get_value() );
 
 		$base_options = [
 			'mode'          => 'range',
@@ -79,26 +72,29 @@ final class Date_Time_Range_Field extends Abstract_Field {
 			'disableMobile' => true,
 		];
 
-		$user_options       = $this->get_extra( 'flatpickr_options', [] );
-		$merged_options     = array_merge( $user_options, $base_options );
-		$placeholder_string = $this->get_extra( 'placeholder', $php_display_format . ' to ' . $php_display_format );
+		$locale = self::get_flatpickr_locale();
+		if ( false !== $locale ) {
+			$base_options['locale'] = $locale;
+		}
+
+		$user_options   = $this->get_extra( 'flatpickr_options', [] );
+		$merged_options = array_merge( is_array( $user_options ) ? $user_options : [], $base_options );
 
 		$hidden_input = sprintf(
 			'<input type="hidden" id="%s" name="%s" value="%s" />',
 			esc_attr( $this->get_id() ),
 			esc_attr( $this->get_name() ),
-			esc_attr( (string) wp_json_encode( $storage_value ) )
+			esc_attr( $js_date )
 		);
 
 		// The visible input's `value` is now empty. The JS `onReady` event will populate it.
 		$visible_input = sprintf(
-			'<input type="text" id="%s_visible" value="" readonly="readonly" class="regular-text wptx-datetime-range-picker" data-options="%s" data-hidden-id="%s" data-display-format="%s" placeholder="%s" data-default-date="%s" />',
+			'<input type="text" id="%s_visible" value="" readonly="readonly" class="regular-text wptx-datetime-range-picker" data-options="%s" data-hidden-id="%s" data-display-format="%s" data-default-date="%s" />',
 			esc_attr( $this->get_id() ),
 			esc_attr( (string) wp_json_encode( $merged_options ) ),
 			esc_attr( $this->get_id() ),
 			esc_attr( $js_display_format ), // Pass translated format to JS.
-			esc_attr( $placeholder_string ),
-			esc_attr( (string) $default_date )
+			esc_attr( $js_date )
 		);
 
 		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
@@ -108,6 +104,7 @@ final class Date_Time_Range_Field extends Abstract_Field {
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public static function get_js_contents(): string {
 		return <<<'JS'
 jQuery(function($) {
@@ -132,7 +129,7 @@ jQuery(function($) {
                 visibleInput.val(formattedStart + ' to ' + formattedEnd);
             }
         };
-        
+
         options.onReady = (selectedDates, dateStr, instance) => {
             updateInputs(selectedDates, instance);
         };
@@ -153,54 +150,44 @@ JS;
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @return string[]|null
+	 * @return array{0:non-empty-string, 1:non-empty-string}|null
 	 */
-	public function get_value(): ?array {
-		$value = parent::get_value();
-		return is_array( $value ) && 2 === count( $value ) ? array_values( array_map( 'strval', $value ) ) : null;
-	}
-
-	/**
-	 * {@inheritDoc}
-	 *
-	 * @return string[]|null
-	 */
+	#[\Override]
 	public function get_default_value(): ?array {
 		$default_value = parent::get_default_value();
-		return is_array( $default_value ) && 2 === count( $default_value ) ? array_values( array_map( 'strval', $default_value ) ) : null;
+		return self::validate_date_range( $default_value, self::STORAGE_FORMAT ) ? $default_value : null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @return string[]|null
+	 * @return array{0:non-empty-string, 1:non-empty-string}|null
 	 */
+	#[\Override]
+	public function get_value(): ?array {
+		$value = parent::get_value();
+		return self::validate_date_range( $value, self::STORAGE_FORMAT ) ? $value : null;
+	}
+
+	/**
+	 * {@inheritDoc}
+	 *
+	 * @return array{0:non-empty-string, 1:non-empty-string}|null
+	 */
+	#[\Override]
 	public function sanitize( mixed $value ): ?array {
 		if ( ! is_string( $value ) || 'null' === $value || '' === $value ) {
 			return null;
 		}
 
 		$decoded = json_decode( $value, true );
-
-		if ( ! is_array( $decoded ) || 2 !== count( $decoded ) ) {
-			return $this->get_default_value();
-		}
-
-		list($start_datetime, $end_datetime) = array_values( $decoded );
-
-		if (
-			is_string( $start_datetime ) && self::validate_date_string( $start_datetime, self::STORAGE_FORMAT ) &&
-			is_string( $end_datetime ) && self::validate_date_string( $end_datetime, self::STORAGE_FORMAT )
-		) {
-			return [ $start_datetime, $end_datetime ];
-		}
-
-		return $this->get_default_value();
+		return self::validate_date_range( $decoded, self::STORAGE_FORMAT ) ? $decoded : null;
 	}
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function should_use_inline_title_as_label(): bool {
 		return true;
 	}
@@ -208,13 +195,11 @@ JS;
 	/**
 	 * Gets the display format (in PHP format) from extras.
 	 *
-	 * @return string
-	 *
-	 * @phpstan-return non-empty-string
+	 * @return non-empty-string
 	 */
 	private function get_display_format(): string {
 		$format = $this->get_extra( 'display_format' );
-		if ( is_string( $format ) && ! empty( $format ) ) {
+		if ( is_string( $format ) && '' !== $format ) {
 			return $format;
 		}
 		return self::DEFAULT_DISPLAY_FORMAT;

@@ -9,22 +9,19 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder;
 
-use WPTechnix\WP_Settings_Builder\Field_Factory;
-use WPTechnix\WP_Settings_Builder\Fields\Abstractions\Abstract_Field;
+use WPTechnix\WP_Settings_Builder\Fields\Common\Abstract_Field;
 
 /**
  * Class Settings_Builder
  *
- * @phpstan-import-type Asset from \WPTechnix\WP_Settings_Builder\Internal\Types
+ * @psalm-suppress UnusedClass
  */
 final class Settings_Builder {
 
 	/**
 	 * Setting Page Instances
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var array<non-empty-string, Settings_Page>
+	 * @var array<non-empty-string, Settings_Page>
 	 */
 	private static array $instances = [];
 
@@ -59,18 +56,14 @@ final class Settings_Builder {
 	/**
 	 * An array of registered ajax actions from field classes.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var array<non-empty-string, callable>
+	 * @var array<non-empty-string, callable>
 	 */
 	private array $ajax_actions = [];
 
 	/**
 	 * Default Field classes.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<class-string<Abstract_Field>>
+	 * @var list<class-string<Abstract_Field>>
 	 */
 	private array $default_field_classes = [
 		Fields\Description_Field::class,
@@ -125,9 +118,7 @@ final class Settings_Builder {
 	 * This method allows developers to add their own custom field types. The provided
 	 * class must extend `Abstract_Field`.
 	 *
-	 * @param string $field_class The fully qualified class name of the custom field.
-	 *
-	 * @phpstan-param class-string<Abstract_Field> $field_class
+	 * @param class-string<Abstract_Field> $field_class The fully qualified class name of the custom field.
 	 *
 	 * @return self
 	 */
@@ -155,35 +146,29 @@ final class Settings_Builder {
 	/**
 	 * Register script or a style.
 	 *
-	 * @param string       $handle   The unique handle for the asset.
-	 * @param string       $type     The type of asset: 'css' or 'js'.
-	 * @param string       $src      The path of the asset.
-	 * @param string[]     $deps     An array of dependencies.
-	 * @param string|false $version  Version (Optional).
-	 *
-	 * @phpstan-param non-empty-string $handle
-	 * @phpstan-param 'css'|'js' $type
-	 * @phpstan-param non-empty-string $src
-	 * @phpstan-param list<non-empty-string> $deps
-	 * @phpstan-param non-empty-string|false $version
+	 * @param non-empty-string                                        $handle  The unique handle for the asset.
+	 * @param 'css'|'js'                                              $type    The type of asset: 'css' or 'js'.
+	 * @param non-empty-string|(callable(): (non-empty-string|false)) $src     The path of the asset.
+	 * @param list<non-empty-string>                                  $deps    An array of dependencies.
+	 * @param non-empty-string|false                                  $version Version (Optional).
 	 *
 	 * @return self
 	 */
 	public function register_asset(
 		string $handle,
 		string $type,
-		string $src,
+		string|callable $src,
 		array $deps = [],
 		string|false $version = false,
 	): self {
 
 		$this->asset_loader::add_registry(
 			[
-				'handle'  => $handle,
-				'type'    => $type,
-				'src'     => $src,
-				'deps'    => $deps,
-				'version' => $version,
+				'handle'       => $handle,
+				'type'         => $type,
+				'src'          => $src,
+				'dependencies' => $deps,
+				'version'      => $version,
 			],
 			true
 		);
@@ -194,15 +179,13 @@ final class Settings_Builder {
 	/**
 	 * Get instance of a setting page by slug.
 	 *
-	 * @param string $page_slug The page slug. (Optional).
-	 *
-	 * @phpstan-param non-empty-string $page_slug
+	 * @param non-empty-string|null $page_slug The page slug. (Optional).
 	 */
 	public static function get_instance( ?string $page_slug = null ): ?Settings_Page {
 		if ( null === $page_slug ) {
 			$page_slug = array_key_first( self::$instances );
 		}
-		if ( empty( $page_slug ) ) {
+		if ( null === $page_slug ) {
 			return null;
 		}
 		return self::$instances[ $page_slug ] ?? null;
@@ -211,17 +194,14 @@ final class Settings_Builder {
 	/**
 	 * Create a settings page.
 	 *
-	 * @param string $option_name Option name.
-	 * @param string $page_slug Page slug.
-	 *
-	 * @phpstan-param non-empty-string $option_name
-	 * @phpstan-param non-empty-string $page_slug
+	 * @param non-empty-string $option_name Option name.
+	 * @param non-empty-string $page_slug Page slug.
 	 */
 	public function create( string $option_name, string $page_slug ): Settings_Page {
 
 		$persistence = new Wp_Options_Persistence( $option_name );
 
-		$instance                      = new Settings_Page(
+		$instance = new Settings_Page(
 			$this->field_factory,
 			$persistence,
 			$this->sanitizer,
@@ -231,6 +211,7 @@ final class Settings_Builder {
 			$option_name,
 			$page_slug
 		);
+
 		self::$instances[ $page_slug ] = $instance;
 		return $instance;
 	}

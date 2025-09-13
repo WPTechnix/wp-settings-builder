@@ -27,21 +27,20 @@ final class Password_Field extends Text_Field {
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'password';
 
 	/**
 	 * {@inheritDoc}
 	 */
+	#[\Override]
 	public function render(): void {
-		$current_value = (string) $this->get_value();
+		$current_value = $this->get_value();
 		$display_value = '';
 
 		// If a value is already saved, create a placeholder of equal length.
-		if ( ! empty( $current_value ) ) {
+		if ( '' !== $current_value ) {
 			$display_value = str_repeat( '*', strlen( $current_value ) );
 		}
 
@@ -70,10 +69,11 @@ final class Password_Field extends Text_Field {
 	 *
 	 * @return string|null The sanitized value ready for persistence.
 	 */
+	#[\Override]
 	public function sanitize( mixed $value ): ?string {
 
 		if ( ! is_scalar( $value ) ) {
-			return $this->get_default_value();
+			return null;
 		}
 
 		$submitted_value = (string) $value;
@@ -83,9 +83,9 @@ final class Password_Field extends Text_Field {
 		// Check for the "no-change" signal. This is our key logic.
 		if (
 			// 1. There must be an old value to compare against.
-			! empty( $old_value ) &&
+			'' !== $old_value &&
 			// 2. The submitted value must consist *only* of one or more asterisks (more idiomatic check).
-			! empty( preg_match( '/^\*+$/', $submitted_value ) ) &&
+			1 === preg_match( '/^\*+$/', $submitted_value ) &&
 			// 3. The length of the submitted placeholder must exactly match the old value's length.
 			strlen( $submitted_value ) === strlen( $old_value )
 		) {

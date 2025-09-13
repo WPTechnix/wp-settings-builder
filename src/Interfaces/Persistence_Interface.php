@@ -17,9 +17,7 @@ interface Persistence_Interface {
 	/**
 	 * Store the full data array into persistence
 	 *
-	 * @param array $data The data to store.
-	 *
-	 * @phpstan-param array<string,mixed> $data
+	 * @param array<array-key,mixed> $data The data to store.
 	 *
 	 * @return bool True on success, false on failure.
 	 */
@@ -28,10 +26,8 @@ interface Persistence_Interface {
 	/**
 	 * Retrieve a single setting by key
 	 *
-	 * @param string $key The setting key.
-	 * @param mixed  $default_value The fallback if the key does not exist.
-	 *
-	 * @phpstan-param non-empty-string $key
+	 * @param non-empty-string $key The setting key.
+	 * @param mixed            $default_value The fallback if the key does not exist.
 	 *
 	 * @return mixed The stored value or the default.
 	 */
@@ -40,10 +36,8 @@ interface Persistence_Interface {
 	/**
 	 * Set a single setting by key
 	 *
-	 * @param string $key   The setting key.
-	 * @param mixed  $value The value to set.
-	 *
-	 * @phpstan-param non-empty-string $key
+	 * @param non-empty-string $key   The setting key.
+	 * @param mixed            $value The value to set.
 	 *
 	 * @return bool True on success, false on failure.
 	 */
@@ -54,9 +48,7 @@ interface Persistence_Interface {
 	 *
 	 * @param bool $force If true, forces reloading from storage.
 	 *
-	 * @return array The stored settings.
-	 *
-	 * @phpstan-return array<string,mixed>
+	 * @return array<array-key,mixed> The stored settings.
 	 */
 	public function load( bool $force = false ): array;
 }

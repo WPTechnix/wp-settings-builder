@@ -9,57 +9,59 @@ declare(strict_types=1);
 
 namespace WPTechnix\WP_Settings_Builder\Fields;
 
+use InvalidArgumentException;
 use WPTechnix\WP_Settings_Builder\Fields\Traits\Has_Select2_Trait;
 
 /**
  * Select Field Class
  */
-class Select_Field extends Choice_Field {
+final class Select_Field extends Choice_Field {
 
 	use Has_Select2_Trait;
 
 	/**
 	 * Field Type.
 	 *
-	 * @var string
-	 *
-	 * @phpstan-var non-empty-string
+	 * @var non-empty-string
 	 */
 	protected static string $type = 'select';
 
 	/**
 	 * CSS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $css_handles = [ 'select2-css' ];
+	protected static array $css_handles = [ 'select2-css' ];
 
 	/**
 	 * JS handle to enqueue.
 	 *
-	 * @var array
-	 *
-	 * @phpstan-var list<non-empty-string>
+	 * @var list<non-empty-string>
 	 */
-	protected static $js_handles = [ 'select2-js' ];
+	protected static array $js_handles = [ 'select2-js', 'select2-locale' ];
 
 	/**
 	 * {@inheritDoc}
 	 *
-	 * @throws \InvalidArgumentException When options are not provided as an array or invalid options are found.
+	 * @throws InvalidArgumentException When options are not provided as an array or invalid options are found.
 	 */
+	#[\Override]
 	public function render(): void {
 		$options = $this->get_options();
 
 		$option_elements = [];
 		foreach ( $options as $option_value => $option_label ) {
+			if ( ! is_scalar( $option_label ) ) {
+				continue;
+			}
+			$option_label = (string) $option_label;
+			$option_value = (string) $option_value;
+
 			$option_elements[] = sprintf(
 				'<option value="%s" %s>%s</option>',
-				esc_attr( (string) $option_value ),
-				selected( $this->get_value(), (string) $option_value, false ),
-				esc_html( (string) $option_label )
+				esc_attr( $option_value ),
+				selected( $this->get_value(), $option_value, false ),
+				esc_html( $option_label )
 			);
 		}
 
