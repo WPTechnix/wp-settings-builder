@@ -2,7 +2,6 @@
 <ruleset name="Custom">
     <arg name="extensions" value="php"/>
     <arg name="parallel" value="8"/>
-    <arg name="cache" value="/tmp/.phpcs.cache"/>
 
     <config name="testVersion" value="8.1"/>
     <config name="minimum_supported_wp_version" value="6.0"/>
@@ -12,13 +11,13 @@
     <rule ref="PHPCompatibility"/>
     <rule ref="PHPCompatibilityWP"/>
     <rule ref="WordPress-Core">
+        <exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint" />
         <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
         <exclude name="WordPress.Files.FileName.NotHyphenatedLowercase"/>
         <exclude name="Universal.Arrays.DisallowShortArraySyntax.Found"/>
         <exclude name="Generic.Commenting.DocComment.MissingShort"/>
         <exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
         <exclude name="Squiz.Commenting.FunctionCommentThrowTag.WrongNumber"/>
-        <exclude name="Squiz.Commenting.FileComment" />
     </rule>
 
     <rule ref="WordPress-Docs"/>
