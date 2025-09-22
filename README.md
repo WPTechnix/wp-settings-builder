@@ -1,5 +1,7 @@
 # WP Settings Builder Framework
 
+WordPress settings framework for easily creating plugin and theme options pages. Includes 30+ field types such as AJAX relational fields, date pickers, and media uploaders.
+
 Stop fighting the WordPress Settings API. This framework provides a modern, object-oriented, and fluent API that streamlines the creation of powerful and maintainable settings pages.
 
 [![Latest Version](https://img.shields.io/packagist/v/wptechnix/wp-settings-builder.svg?style=for-the-badge)](https://packagist.org/packages/wptechnix/wp-settings-builder)

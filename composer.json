@@ -1,7 +1,7 @@
 {
     "name": "wptechnix/wp-settings-builder",
     "version": "1.0.0",
-    "description": "A modern, object-oriented, and fluent builder framework for creating complex and maintainable WordPress settings pages with minimal boilerplate",
+    "description": "WordPress settings framework for easily creating plugin and theme options pages. Includes 30+ field types such as AJAX relational fields, date pickers, and media uploaders.",
     "type": "library",
     "license": "MIT",
     "keywords": [

@@ -36,6 +36,7 @@ copy_file "docker/.env.example" "docker/.env"
 copy_file "docker/php.ini.example" "docker/php.ini"
 copy_file "phpstan.neon.dist" "phpstan.neon"
 copy_file "phpcs.xml.dist" "phpcs.xml"
+copy_file "psalm.xml.dist" "psalm.xml"
 copy_file "phpunit.xml.dist" "phpunit.xml"
 
 echo "Done."
