@@ -86,7 +86,7 @@ run_in_container() {
     fi
 
     echo "--- Running in '$service': ${cmd_array[*]} ---"
-    exec docker exec "${exec_flags[@]}" "$container_id" "${cmd_array[@]}"
+    MSYS_NO_PATHCONV=1 exec docker exec "${exec_flags[@]}" "$container_id" "${cmd_array[@]}"
 }
 
 

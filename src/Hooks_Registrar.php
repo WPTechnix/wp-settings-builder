@@ -56,7 +56,7 @@ final class Hooks_Registrar {
 	public function init(): void {
 		add_action( 'admin_menu', [ $this, 'register_admin_page' ], 10, 0 );
 		add_action( 'admin_init', [ $this, 'register_settings_api' ], 10, 0 );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ], 10, 1 );
 
 		foreach ( $this->ajax_actions as $action => $callback ) {
 			/** @psalm-suppress  HookNotFound */

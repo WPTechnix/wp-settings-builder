@@ -1,5 +1,10 @@
 # Changelog
 
+## <small>1.0.1 (2025-10-03)</small>
+
+* fix: text field sanitization logic ([ffb7d53](https://github.com/WPTechnix/wp-settings-builder/commit/ffb7d53))
+* chore: update project description in README.md and composer.json ([3630adf](https://github.com/WPTechnix/wp-settings-builder/commit/3630adf))
+
 ## 1.0.0 (2025-09-05)
 
 ### Features

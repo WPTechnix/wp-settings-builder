@@ -1,6 +1,6 @@
 {
     "name": "wptechnix/wp-settings-builder",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "description": "WordPress settings framework for easily creating plugin and theme options pages. Includes 30+ field types such as AJAX relational fields, date pickers, and media uploaders.",
     "type": "library",
     "license": "MIT",
@@ -20,7 +20,7 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "require": {
-        "php": ">=8.0"
+        "php": "^8.0"
     },
     "require-dev": {
         "humanmade/psalm-plugin-wordpress": "^3.1",

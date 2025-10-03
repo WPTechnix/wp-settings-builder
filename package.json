@@ -9,7 +9,7 @@
     "framework",
     "settings-builder"
   ],
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "WPTechnix <developers@wptechnix.com>",
   "devDependencies": {
     "@commitlint/cli": "^19.8.1",
