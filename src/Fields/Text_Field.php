@@ -76,7 +76,7 @@ class Text_Field extends Abstract_Field {
 	 */
 	#[\Override]
 	public function sanitize( mixed $value ): ?string {
-		return is_scalar( $value ) ? sanitize_email( (string) $value ) : null;
+		return is_scalar( $value ) ? sanitize_text_field( wp_unslash( (string) $value ) ) : null;
 	}
 
 	/**
